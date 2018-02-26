@@ -2,22 +2,29 @@
 set -eou pipefail
 
 setup_email(){
-  echo "set realname=\"iris\""          >>/root/.muttrc \
-    && echo "set edit_headers=yes"      >>/root/.muttrc \
-    && echo "set from=\"Iris <${email}>\"" >>/root/.muttrc \
-    && echo "myorigin = gmail.com"      >>/etc/postfix/main.cf \
-    && echo "smtp_generic_maps = hash:/etc/postfix/generic"   >>/etc/postfix/main.cf \
-    && echo "smtputf8_enable = no"      >>/etc/postfix/main.cf \
-    && echo "$email $email" >>/etc/postfix/generic \
+  echo set from = "${email}@gmail.com"                >>/root/.muttrc \
+    && echo set realname = "Iris"                     >>/root/.muttrc \
+    && echo set imap_user = "john.skilbeck@gmail.com" >>/root/.muttrc \
+    && echo set imap_pass = "${email_pw}"             >>/root/.muttrc \
+    && echo set folder = "imaps://imap.gmail.com:993" >>/root/.muttrc \
+    && echo set spoolfile = "+INBOX"                  >>/root/.muttrc \
+    && echo set postponed ="+[Gmail]/Drafts"          >>/root/.muttrc \
+    && echo set header_cache =~/.mutt/cache/headers   >>/root/.muttrc \
+    && echo set message_cachedir =~/.mutt/cache/bodies  >>/root/.muttrc \
+    && echo set certificate_file =~/.mutt/certificates  >>/root/.muttrc \
+    && echo set smtp_url = "smtps://johnskilbeck@smtp.gmail.com:465/"  >>/root/.muttrc \
+    && echo set smtp_pass = "${email_pw}"             >>/root/.muttrc \
+    && echo set move = no                             >>/root/.muttrc \
+    && echo set imap_keepalive = 900                  >>/root/.muttrc \
     && chown -R postfix /var/spool/postfix/ \
     && chown root /var/spool/postfix/ \
-    && chown root /var/spool/postfix/pid
+    && chown root /var/spool/postfix/pid \
+    && postmap /etc/postfix/generic
 
-  postmap /etc/postfix/generic
   set +e
   postfix start || echo 'Postfix already running'
   set -e
-  sleep 5
+  sleep 3
 }
 
 email() {

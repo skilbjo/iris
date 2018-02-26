@@ -4,6 +4,7 @@ ENV CMD="usr/local/deploy/bin/run-job"
 
 
 
+
 COPY deploy                      /usr/local/deploy
 COPY resources                   /usr/local/resources
 COPY src                         /usr/local/src
