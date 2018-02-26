@@ -11,7 +11,7 @@ set -eou pipefail
 
 
 
-apk add -U bash bash-completion vim coreutils postgres-client postfix mutt tzdata \
+apk add -U bash bash-completion vim coreutils postgresql-client postfix mutt tzdata \
   && mkdir -p /out \
   && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
   && echo "America/Los_Angeles" >/etc/timezone \
