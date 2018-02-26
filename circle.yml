@@ -1,0 +1,14 @@
+machine:
+  services:
+    - docker
+
+test:
+  override:
+    - echo 'A okay here...'
+
+deployment:
+  quay:
+    branch: /.*/
+    commands:
+      - deploy/bin/publish-image
+
