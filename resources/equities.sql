@@ -1,5 +1,6 @@
 with date as (
-  select (now() at time zone 'pst' - interval '3 day')::date now
+  -- select (now() at time zone 'pst')::date now
+  select '2018-02-20'::date now
 )
 select
   _t.*

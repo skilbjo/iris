@@ -11,7 +11,7 @@ COPY src                         /usr/local/src
 COPY deploy/default/bashrc       /root/.bashrc
 COPY deploy/default/vimrc        /root/.vimrc
 
-RUN apk add -U bash bash-completion vim coreutils postgresql-client postfix mutt tzdata \
+RUN apk add -U bash bash-completion ca-certificates vim coreutils postgresql-client postfix mutt tzdata \
     && mkdir -p /out \
     && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
     && echo "America/Los_Angeles" >/etc/timezone \

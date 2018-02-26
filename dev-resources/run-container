@@ -7,4 +7,5 @@ app_name=$(basename $(dirname $dir))
 docker run -it --rm \
   -e db_uri="$(echo $db_uri)" \
   -e email="$(echo $email)" \
+  -e email_pw="$(echo $email_pw)" \
   "$app_name":dev bash

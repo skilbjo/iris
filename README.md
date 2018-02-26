@@ -14,4 +14,9 @@ Email reporting of financial data
 ## environment variables
 ```bash
 export db_uri=''
+export email=''
+export email_pw=''
 ```
+
+## links
+- <https://gist.github.com/hahnicity/45323026693cdde6a116>
