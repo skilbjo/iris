@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+
+
+
+
+
+
+
+
+
+apk add -U bash bash-completion vim coreutils postfix mutt tzdata \
+  && mkdir -p /out \
+  && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
+  && echo "America/Los_Angeles" >/etc/timezone \
+  && rm -rf /var/cache/apk/*
+
+echo "set realname=\"iris\""          >>/root/.muttrc \
+  && echo "set edit_headers=yes"      >>/root/.muttrc \
+  && echo "set from=\"Iris <john.skilbeck@gmail.com>\""     >>/root/.muttrc \
+  && echo "myorigin = gmail.com"      >>/etc/postfix/main.cf \
+  && echo "smtp_generic_maps = hash:/etc/postfix/generic"   >>/etc/postfix/main.cf \
+  && echo "smtputf8_enable = no"      >>/etc/postfix/main.cf \
+  && echo "john.skilbeck@gmail.com john.skilbeck@gmail.com" >>/etc/postfix/generic \
+  && chown -R postfix /var/spool/postfix/ \
+  && chown root /var/spool/postfix/ \
+  && chown root /var/spool/postfix/pid

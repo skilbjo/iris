@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+src_dir="usr/local/src"
+deploy_dir="usr/local/deploy/bin"
+cmd="${src_dir}/iris"
+
+# Prereqs
+set +e
+case $(uname -a) in
+  *arm* )
+    eval "${deploy_dir}/apk" ;;
+esac
+apk fix || echo 'Unable to reach apk... continuing...'
+set -e
+
+exec $cmd $@

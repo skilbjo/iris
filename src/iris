@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+resources_dir="usr/local/resources"
+src_dir="usr/local/src"
+
+setup(){
+  source "${src_dir}/util"
+  setup_email $email
+}
+
+_report(){
+  report="$1"
+
+  psql "$db_uri" --html -f "${resources_dir}/${report}.sql" >"/out/${report}"
+
+  email $report
+}
+
+setup \
+  && _report equities

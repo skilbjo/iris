@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+setup_email(){
+  echo "set realname=\"iris\""          >>/root/.muttrc \
+    && echo "set edit_headers=yes"      >>/root/.muttrc \
+    && echo "set from=\"Iris <${email}>\"" >>/root/.muttrc \
+    && echo "myorigin = gmail.com"      >>/etc/postfix/main.cf \
+    && echo "smtp_generic_maps = hash:/etc/postfix/generic"   >>/etc/postfix/main.cf \
+    && echo "smtputf8_enable = no"      >>/etc/postfix/main.cf \
+    && echo "$email $email" >>/etc/postfix/generic \
+    && chown -R postfix /var/spool/postfix/ \
+    && chown root /var/spool/postfix/ \
+    && chown root /var/spool/postfix/pid
+
+  postmap /etc/postfix/generic
+  set +e
+  postfix start || echo 'Postfix already running'
+  set -e
+  sleep 5
+}
+
+email() {
+  local report="$1"
+
+  printf "Iris report for $(date -I): \n\n$(cat "/out/${report}")" | \
+    mutt -s "Iris report for $report on $(date -I)" -- $email
+  sleep 5
+}

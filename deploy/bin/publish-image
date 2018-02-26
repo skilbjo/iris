@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+publish_x86() {
+  if [[ -f Dockerfile ]]; then rm Dockerfile; fi
+  if [[ -d target     ]]; then rm -rf target; fi
+
+  cat deploy/default/publish-image | \
+    sed "s/tag='latest'/tag='x86'/g" | \
+    sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-x86/g' | \
+    sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_x86"/g' \
+    >>deploy/bin/publish-x86
+
+  chmod u+x deploy/bin/publish-x86 && \
+    deploy/bin/publish-x86
+}
+
+publish_arm() {
+  if [[ -f Dockerfile ]]; then rm Dockerfile; fi
+  if [[ -d target     ]]; then rm -rf target; fi
+
+  cat deploy/default/publish-image | \
+    sed "s/cat '.\/deploy\/default\/Dockerfile'/cat '.\/deploy\/default\/Dockerfile.arm'/g" | \
+    sed "s/tag='latest'/tag='arm'/g" | \
+    sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-arm/g' | \
+    sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_arm"/g' \
+    >>deploy/bin/publish-arm
+
+  chmod u+x deploy/bin/publish-arm && \
+    deploy/bin/publish-arm
+}
+
+publish_arm && \
+  publish_x86
