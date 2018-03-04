@@ -33,6 +33,7 @@ get_current_artifacts(){
 get_current_artifacts
 
 docker run --rm \
+  --name="$(echo $app_name $@ | tr ' ' '_')" \
   -e db_uri="$(echo $db_uri)" \
   -e email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \

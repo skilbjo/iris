@@ -17,5 +17,12 @@ _report(){
   email $report
 }
 
+_portfolio(){
+  #exit_if weekend
+  exit_if holiday
+
+  _report portfolio
+}
+
 setup \
-  && _report equities
+  && _portfolio
