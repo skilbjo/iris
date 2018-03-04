@@ -6,4 +6,4 @@
   app_dir="/home/skilbjo/deploy/app/iris"
 
 ## -- jobs ----------------------------------------
-0 16 * * * skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
+25 16 * * * skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1

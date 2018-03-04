@@ -30,9 +30,11 @@ setup_email(){
 email() {
   local report="$1"
 
-  printf "Iris report for $(date -I): \n\n$(cat "/out/${report}")" | \
+  echo "Iris report for $(date -I): $(cat "/out/${report}")" | \
     mutt -e 'set content_type=text/html' \
-      -s "Iris report for $report on $(date -I)" -- $email
+      -s "Iris report for $report on $(date -I)" \
+      -a "/out/${report}.csv" \
+      -- $email
   sleep 5
 }
 

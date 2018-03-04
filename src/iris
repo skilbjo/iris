@@ -12,14 +12,15 @@ setup(){
 _report(){
   report="$1"
 
-  psql "$db_uri" --html -f "${resources_dir}/${report}.sql" >"/out/${report}"
+  psql "$db_uri" --html -f "${resources_dir}/${report}.sql" >"/out/${report}"     # html
+  psql "$db_uri" -AF',' -f "${resources_dir}/${report}.sql" >"/out/${report}.csv" # csv
 
   email $report
 }
 
 _portfolio(){
-  #exit_if weekend
-  exit_if holiday
+  #exit_if weekend && \
+    exit_if holiday
 
   _report portfolio
 }
