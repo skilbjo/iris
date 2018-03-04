@@ -9,10 +9,9 @@ with now as (
       when 0 then (select now from now) - 2
       else        (select now from now) - 1
     end as yesterday
-), today as (
+), detail as (
   select
     markets.description,
-    markets.ticker,
     sum((quantity * cost_per_share))                        cost_basis,
     sum((quantity * close))                                 market_value,
     sum(((quantity * close) - (quantity * cost_per_share))) gain_loss
@@ -23,35 +22,13 @@ with now as (
   where
     date in ( select today from date )
   group by
-    1,2
-), yesterday as (
-  select
-    markets.description,
-    markets.ticker,
-    sum((quantity * close))                                 yesterday
-  from
-    dw.equities
-    join dw.portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
-    join dw.markets on equities.dataset = markets.dataset and equities.ticker = markets.ticker
-  where
-    date in ( select yesterday from date )
-  group by
-    1,2
-), detail as (
-  select
-    today.description,
-    today.cost_basis, today.market_value, today.gain_loss,
-    today.market_value - yesterday.yesterday today_gain_loss
-  from
-    today
-    join yesterday on today.ticker = yesterday.ticker
+    1
 ), summary as (
   select
     'Portfolio Total'::text description,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
-    sum(gain_loss)          gain_loss,
-    sum(today_gain_loss)    today_gain_loss
+    sum(gain_loss)          gain_loss
   from
     detail
 ), _union as (
@@ -60,11 +37,8 @@ with now as (
   select * from detail
 ), report as (
   select
-    description, cost_basis::int , market_value::int,
-    today_gain_loss::int,
-    (today_gain_loss / market_value * 100)::decimal(8,2) || '%'  "today_gain_loss_%",
-    gain_loss::int total_gain_loss,
-    (gain_loss / market_value * 100)::decimal(8,2) || '%'  "total_gain_loss_%"
+    description, cost_basis::int , market_value::int, gain_loss::int,
+    (gain_loss / market_value * 100)::decimal(8,2) || '%'  "gain_loss_%"
   from
     _union
 )
