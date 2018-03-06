@@ -1,6 +1,5 @@
 with now as (
-  select '2018-02-27'::date now
---  select (now() at time zone 'pst')::date now
+  select (now() at time zone 'pst')::date now
 ), date as (
   select
     (select now from now) today,
