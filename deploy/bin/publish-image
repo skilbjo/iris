@@ -24,7 +24,7 @@ publish_x86_debian() {
     sed "s/tag='latest'/tag='x86-debian'/g" | \
     sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-x86-debian/g' | \
     sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_x86-debian"/g' \
-    >>deploy/bin/publish-x86
+    >>deploy/bin/publish-x86-debian
 
   chmod u+x deploy/bin/publish-x86-debian && \
     deploy/bin/publish-x86-debian
