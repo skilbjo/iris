@@ -1,4 +1,4 @@
-FROM gliderlabs/alpine:latest
+FROM gliderlabs/alpine:3.5
 
 ENV CMD="usr/local/deploy/bin/run-job"
 

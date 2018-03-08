@@ -1,4 +1,4 @@
-FROM bitname/minideb:jessi
+FROM bitnami/minideb:jessi
 
 ENV CMD="usr/local/deploy/bin/run-job"
 
@@ -10,3 +10,9 @@ COPY resources                   /usr/local/resources
 COPY src                         /usr/local/src
 COPY deploy/default/bashrc       /root/.bashrc
 COPY deploy/default/vimrc        /root/.vimrc
+
+RUN apt-get update \
+    && apt-get install -y bash bash-completion coreutils vim postgresql-client \
+    && mdkir -p /out \
+    && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
+    && echo "America/Los_Angeles" >/etc/timezone
