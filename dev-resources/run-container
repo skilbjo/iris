@@ -5,6 +5,7 @@ dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 app_name=$(basename $(dirname $dir))
 
 docker run -it --rm \
+  --name="$(echo $app_name)" \
   -e db_uri="$(echo $db_uri)" \
   -e email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \

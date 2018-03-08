@@ -15,6 +15,21 @@ publish_x86() {
     deploy/bin/publish-x86
 }
 
+publish_x86_debian() {
+  if [[ -f Dockerfile ]]; then rm Dockerfile; fi
+  if [[ -d target     ]]; then rm -rf target; fi
+
+  cat deploy/default/publish-image | \
+    sed "s/cat '.\/deploy\/default\/Dockerfile'/cat '.\/deploy\/default\/Dockerfile.debian'/g" | \
+    sed "s/tag='latest'/tag='x86-debian'/g" | \
+    sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-x86-debian/g' | \
+    sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_x86-debian"/g' \
+    >>deploy/bin/publish-x86
+
+  chmod u+x deploy/bin/publish-x86-debian && \
+    deploy/bin/publish-x86-debian
+}
+
 publish_arm() {
   if [[ -f Dockerfile ]]; then rm Dockerfile; fi
   if [[ -d target     ]]; then rm -rf target; fi
@@ -31,4 +46,5 @@ publish_arm() {
 }
 
 publish_arm && \
-  publish_x86
+  publish_x86 && \
+  publish_x86_debian
