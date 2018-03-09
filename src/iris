@@ -6,7 +6,10 @@ src_dir="usr/local/src"
 
 setup(){
   source "${src_dir}/util"
+
   setup_email $email
+
+  mkdir -p /out
 }
 
 _report(){
@@ -19,7 +22,7 @@ _report(){
 }
 
 _portfolio(){
-  #exit_if weekend && \
+  exit_if weekend && \
     exit_if holiday
 
   _report portfolio
