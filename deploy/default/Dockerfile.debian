@@ -1,4 +1,4 @@
-FROM bitnami/minideb:jessi
+FROM bitnami/minideb:stretch
 
 ENV CMD="usr/local/deploy/bin/run-job"
 
