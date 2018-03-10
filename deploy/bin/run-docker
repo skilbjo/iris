@@ -35,7 +35,7 @@ get_current_artifacts
 docker run --rm \
   --name="$(echo $app_name $@ | tr ' ' '_')" \
   -e db_uri="$(echo $db_uri)" \
-  -e email="$(echo $email)" \
+  -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
   "$img" \
   "$job_cmd" $@

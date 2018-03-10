@@ -5,6 +5,8 @@ resources_dir="usr/local/resources"
 src_dir="usr/local/src"
 
 setup(){
+  export email="${_email}"
+
   source "${src_dir}/util"
   source "${src_dir}/athena"
 
@@ -32,7 +34,7 @@ _report_athena(){
 }
 
 _portfolio(){
-  exit_if weekend && \
+  #exit_if weekend && \
     exit_if holiday
 
   set +u

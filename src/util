@@ -2,9 +2,9 @@
 set -eou pipefail
 
 setup_email(){
-  echo set from = "${email}@gmail.com"                >>/root/.muttrc \
+  echo set from = "${email}"                          >>/root/.muttrc \
     && echo set realname = "Iris"                     >>/root/.muttrc \
-    && echo set imap_user = "john.skilbeck@gmail.com" >>/root/.muttrc \
+    && echo set imap_user = "${email}"                >>/root/.muttrc \
     && echo set imap_pass = "${email_pw}"             >>/root/.muttrc \
     && echo set folder = "imaps://imap.gmail.com:993" >>/root/.muttrc \
     && echo set spoolfile = "+INBOX"                  >>/root/.muttrc \
@@ -12,7 +12,7 @@ setup_email(){
     && echo set header_cache =~/.mutt/cache/headers   >>/root/.muttrc \
     && echo set message_cachedir =~/.mutt/cache/bodies  >>/root/.muttrc \
     && echo set certificate_file =~/.mutt/certificates  >>/root/.muttrc \
-    && echo set smtp_url = "smtps://johnskilbeck@smtp.gmail.com:465/"  >>/root/.muttrc \
+    && echo set smtp_url = "smtps://$(echo $email | sed 's/@.*//')@smtp.gmail.com:465/"  >>/root/.muttrc \
     && echo set smtp_pass = "${email_pw}"             >>/root/.muttrc \
     && echo set move = no                             >>/root/.muttrc \
     && echo set imap_keepalive = 900                  >>/root/.muttrc \
