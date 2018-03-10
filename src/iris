@@ -8,7 +8,7 @@ setup(){
   source "${src_dir}/util"
   source "${src_dir}/athena"
 
-  setup_email $email
+  setup_email
 
   mkdir -p /out
 }
