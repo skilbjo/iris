@@ -11,7 +11,13 @@ case $(uname -a) in
   *arm* )
     eval "${deploy_dir}/apk" ;;
 esac
-apk fix || echo 'Unable to reach apk... continuing...'
+
+case $(cat /etc/os-release | grep -i '^name=' | sed 's/NAME=//' | sed 's/^"\(.*\)"$/\1/') in
+  'Alpine Linux' )
+    apk fix || echo 'Unable to reach apk... continuing...' ;;
+  'Debian GNU/Linux' )
+    echo '' ;; # Any quirks with Debian can go here
+esac
 set -e
 
 exec $cmd $@
