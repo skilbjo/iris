@@ -6,6 +6,7 @@ src_dir="usr/local/src"
 
 setup(){
   source "${src_dir}/util"
+  source "${src_dir}/athena"
 
   setup_email $email
 
@@ -21,11 +22,26 @@ _report(){
   email $report
 }
 
+_report_athena(){
+  report="$1"
+
+  athena "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # html...
+  athena "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # csv
+
+  email $report
+}
+
 _portfolio(){
   exit_if weekend && \
     exit_if holiday
 
-  _report portfolio
+  set +u
+  if [[ ! -z $db_uri ]]; then
+    _report portfolio
+  else
+    _report_athena portfolio
+  fi
+  set -u
 }
 
 setup \
