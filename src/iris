@@ -27,8 +27,13 @@ _report(){
 _report_athena(){
   report="$1"
 
-  query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # html...
-  query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # csv
+  query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}.csv" # csv
+
+  echo "<table>"                                    >"/out/${report}"
+  while read INPUT ; do
+    echo "<tr><td>${INPUT//,/</td><td>}</td></tr>" >>"/out/${report}" ;
+  done < "/out/${report}.csv" ;
+  echo "</table>"                                  >>"/out/${report}"
 
   email $report
 }
