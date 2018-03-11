@@ -13,6 +13,7 @@ COPY deploy/default/vimrc        /root/.vimrc
 
 RUN apt-get update \
     && apt-get install -y bash bash-completion ca-certificates coreutils postgresql-client postfix mutt python python-pip python-six \
+    && apt-get --reinstall install -y python-pyasn1 python-pyasn1-modules \
     && pip install --upgrade pip && pip install awscli \
     && apt-get purge -y --auto-remove python-pip \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
