@@ -12,7 +12,8 @@ COPY deploy/default/bashrc       /root/.bashrc
 COPY deploy/default/vimrc        /root/.vimrc
 
 RUN apt-get update \
-    && apt-get install -y bash bash-completion ca-certificates coreutils postgresql-client postfix mutt vim python python-pip \
+    && apt-get install -y bash bash-completion ca-certificates coreutils postfix mutt python python-pip \
     && pip install awscli \
+    && apt-get autoremove && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
     && echo "America/Los_Angeles" >/etc/timezone
