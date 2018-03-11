@@ -47,6 +47,13 @@ setup_email(){
 email() {
   local report="$1"
 
+  set +e
+  if [[ -d /sent ]]; then ls -la /sent; fi
+  set -e
+
+  echo 'Running date -I'
+  date -I
+
   echo "Iris report for $(date -I): $(cat "/out/${report}")" | \
     mutt -e 'set content_type=text/html' \
       -s "Iris report for $report on $(date -I)" \

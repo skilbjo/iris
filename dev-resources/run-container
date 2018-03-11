@@ -4,6 +4,12 @@ set -eou pipefail
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 app_name=$(basename $(dirname $dir))
 
+# aws
+  #-e aws_access_key_id="$(echo '')" \
+  #-e aws_secret_access_key="$(echo '')" \
+# db
+  #-e db_uri="$(echo $db_uri)" \
+
 docker run -it --rm \
   --name="$(echo $app_name)" \
   -e db_uri="$(echo $db_uri)" \
