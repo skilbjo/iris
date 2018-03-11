@@ -45,6 +45,6 @@ publish_arm() {
     deploy/bin/publish-arm
 }
 
-publish_x86_debian && \
+publish_arm && \
   publish_x86 && \
-  publish_arm
+  publish_x86_debian
