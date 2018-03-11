@@ -15,7 +15,7 @@ RUN apt-get update \
     && apt-get install -y bash bash-completion ca-certificates coreutils postgresql-client postfix mutt python python-pip python-six \
     && apt-get --reinstall install -y python-pyasn1 python-pyasn1-modules \
     && pip install --upgrade pip && pip install awscli \
-    && mkdir -p /root/.aws && echo "[default]" >/root/.aws/config && echo "region = us-east-1" >>/root/.aws/config && chmod 700 /root/.aws && \
+    && mkdir -p /root/.aws && echo "[default]" >/root/.aws/config && echo "region = us-east-1" >>/root/.aws/config && chmod 700 /root/.aws \
     && apt-get purge -y --auto-remove python-pip \
     && apt-get autoremove -y && apt-get clean -y && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
