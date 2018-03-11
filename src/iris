@@ -41,6 +41,7 @@ _portfolio(){
   if [[ ! -z $db_uri ]]; then
     _report portfolio
   else
+    setup_aws
     _report_athena portfolio
   fi
   set -u
