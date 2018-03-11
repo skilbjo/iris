@@ -27,8 +27,8 @@ _report(){
 _report_athena(){
   report="$1"
 
-  athena "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # html...
-  athena "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # csv
+  query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # html...
+  query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}" # csv
 
   email $report
 }

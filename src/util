@@ -16,6 +16,7 @@ setup_email(){
     && echo set smtp_pass = "${email_pw}"             >>/root/.muttrc \
     && echo set move = no                             >>/root/.muttrc \
     && echo set imap_keepalive = 900                  >>/root/.muttrc \
+    && echo set crypt_use_gpgme=no                    >>/root/.muttrc \
     && chown -R postfix /var/spool/postfix/ \
     && chown root /var/spool/postfix/ \
     && chown root /var/spool/postfix/pid \
@@ -49,9 +50,11 @@ exit_if(){
       esac
       ;;
     holiday )
-      if [[ "True" == $(psql $db_uri -tc 'select "official_public_holiday?" from dw.date_dim where date = now()::date;' | awk '{$1=$1};1' | head -n1) ]]; then
+      set +u
+      if [[ ! -z $db_uri && "True" == $(psql $db_uri -tc 'select "official_public_holiday?" from dw.date_dim where date = now()::date;' | awk '{$1=$1};1' | head -n1) ]]; then
         exit 0
       fi
+      set -u
       ;;
     *)
       ;;

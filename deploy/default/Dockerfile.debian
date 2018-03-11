@@ -12,6 +12,6 @@ COPY deploy/default/bashrc       /root/.bashrc
 COPY deploy/default/vimrc        /root/.vimrc
 
 RUN apt-get update \
-    && apt-get install -y bash bash-completion coreutils vim postgresql-client \
+    && apt-get install -y bash bash-completion ca-certificates coreutils postgresql-client postfix mutt vim \
     && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
     && echo "America/Los_Angeles" >/etc/timezone
