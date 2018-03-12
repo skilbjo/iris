@@ -10,8 +10,6 @@ setup(){
   source "${src_dir}/util"
   source "${src_dir}/athena"
 
-  setup_email
-
   mkdir -p /out
 }
 
@@ -24,33 +22,35 @@ _report(){
   email $report
 }
 
+_portfolio(){
+  exit_if weekend && exit_if holiday
+
+  setup_email
+
+  _report portfolio
+}
+
 _report_athena(){
   report="$1"
 
   query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}.csv" # csv
 
-  echo "<table>"                                    >"/out/${report}"
+  echo '<table border="2" cellspacing="1" cellpadding="2">'        >"/out/${report}"
   while read INPUT ; do
-    echo "<tr><td>${INPUT//,/</td><td>}</td></tr>" >>"/out/${report}" ;
+    echo "<tr><td align='center'>${INPUT//,/</td><td>}</td></tr>" >>"/out/${report}" ;
   done < "/out/${report}.csv" ;
-  echo "</table>"                                  >>"/out/${report}"
+  echo '</table>'                                                 >>"/out/${report}"
 
-  email $report
+  email_aws $report
 }
 
-_portfolio(){
-  #exit_if weekend && \
-    exit_if holiday
+_portfolio_aws(){
+  #exit_if weekend
 
-  set +u
-  if [[ ! -z $db_uri ]]; then
-    _report portfolio
-  else
-    setup_aws
-    _report_athena portfolio
-  fi
-  set -u
+  setup_aws
+
+  _report_athena portfolio
 }
 
 setup \
-  && _portfolio
+  && set +u; if [[ ! -z $db_uri ]]; then _portfolio; else _portfolio_aws; fi; set -u

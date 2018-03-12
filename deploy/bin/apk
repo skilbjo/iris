@@ -11,7 +11,8 @@ set -eou pipefail
 
 
 
-apk add -U bash bash-completion vim coreutils postgresql-client postfix mutt tzdata \
+apk add -U bash bash-completion coreutils postgresql-client postfix mutt git vim tzdata \
+  && mkdir -p /root/.vim  && git clone https://github.com/Shougo/neobundle.vim ~/.vim/bundle && ~/.vim/bundle/bin/install.sh && ~/.vim/bundle/bin/neoinstall \
   && cp /usr/share/zoneinfo/America/Los_Angeles /etc/localtime \
   && echo "America/Los_Angeles" >/etc/timezone \
   && rm -rf /var/cache/apk/*

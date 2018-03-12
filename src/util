@@ -44,15 +44,22 @@ setup_email(){
   sleep 3
 }
 
+email_aws(){
+  local report="$1"
+  local subject="Iris report for ${report} on $(date -I)"
+  local body="Iris report for $(date -I): $(cat "/out/${report}" | sed 's/\"//g' | tr -d "\n\r")"
+  local attachment="$(base64 -w 0 /out/${report}.csv)"
+
+  echo "{\"Data\": \"From: ${email}\\nTo: ${email}\\nSubject: ${subject}\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\\\"NextPart\\\"\\n\\n--NextPart\\nContent-Type: text/html;\\n\\n${body}\\n\\n--NextPart\\nContent-Type: text/csv;\\nContent-Disposition: attachment; filename=\\\"${report}.csv\\\"\\nContent-Transfer-Encoding: base64\\n\\n${attachment}\\n\\n--NextPart--\"}" >"/out/${report}.json"
+
+  aws ses \
+    send-raw-email \
+    --region us-east-1 \
+    --raw-message "file:///out/${report}.json"
+}
+
 email() {
   local report="$1"
-
-  set +e
-  if [[ -d /sent ]]; then ls -la /sent; fi
-  set -e
-
-  echo 'Running date -I'
-  date -I
 
   echo "Iris report for $(date -I): $(cat "/out/${report}")" | \
     mutt -e 'set content_type=text/html' \
