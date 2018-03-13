@@ -1,11 +1,9 @@
 with now as (
-  -- select cast(current_timestamp at time zone 'America/Los_Angeles' as date) as now
-  select cast('2018-03-08' as date) as now
+  select cast(current_timestamp at time zone 'America/Los_Angeles' as date) as now
 ), date as (
   select
     (select now from now) today,
-    -- case day_of_week(current_timestamp at time zone 'America/Los_Angeles') % 7
-    case day_of_week(cast('2018-03-07' as date)) % 7
+    case day_of_week(current_timestamp at time zone 'America/Los_Angeles') % 7
       when 1 then (select now from now) - interval '3' day
       when 0 then (select now from now) - interval '2' day
       else        (select now from now) - interval '1' day
