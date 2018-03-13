@@ -9,7 +9,7 @@ app_name=$(basename $(dirname $dir))
   #-e aws_secret_access_key="$(echo '')" \
 # db
   #-e db_uri="$(echo $db_uri)" \
-  #-e db_uri="$(echo 'postgres://postgres@192.168.99.100:5432:5432/postgres')" \
+  #-e db_uri="$(echo 'postgres://postgres@192.168.99.100:5432/postgres')" \
 
 docker run -it --rm \
   --name="$(echo $app_name)" \
