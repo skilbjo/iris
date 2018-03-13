@@ -34,6 +34,9 @@ with now as (
     cast(ex_dividend as decimal(10,2)) as ex_dividend
   from
     dw.equities
+  -- where
+    -- s3uploaddate between cast(current_timestamp at time zone 'America/Los_Angeles' as date)
+                 -- and     cast(current_timestamp at time zone 'America/Los_Angeles' as date) - interval '1' day
 ), today as (
   select
     markets.description,

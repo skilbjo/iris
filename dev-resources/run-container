@@ -13,7 +13,8 @@ app_name=$(basename $(dirname $dir))
 
 docker run -it --rm \
   --name="$(echo $app_name)" \
-  -e db_uri="$(echo 'postgres://postgres@192.168.99.100:5432:5432/postgres')" \
+  -e aws_access_key_id="$(echo '')" \
+  -e aws_secret_access_key="$(echo '')" \
   -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
   "$app_name":dev bash
