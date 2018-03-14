@@ -34,9 +34,9 @@ with now as (
     cast(ex_dividend as decimal(10,2)) as ex_dividend
   from
     dw.equities
-  -- where
-    -- s3uploaddate between cast(current_timestamp at time zone 'America/Los_Angeles' as date)
-                 -- and     cast(current_timestamp at time zone 'America/Los_Angeles' as date) - interval '1' day
+  where
+    s3uploaddate between cast((select yesterday from date) as date)
+                 and     cast((select today from date) as date)
 ), today as (
   select
     markets.description,
@@ -72,7 +72,8 @@ with now as (
     today.market_value - yesterday.yesterday today_gain_loss
   from
     today
-    join yesterday on today.ticker = yesterday.ticker
+    full outer join yesterday on today.ticker = yesterday.ticker
+  order by today.market_value desc
 ), summary as (
   select
     'Portfolio Total'       description,
@@ -92,7 +93,7 @@ with now as (
     cast(today_gain_loss as integer) today_gain_loss,
     cast(cast((today_gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "today_gain_loss_%",
     cast(gain_loss as integer) total_gain_loss,
-    cast(cast((gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "total_gain_loss_%"
+    cast(cast((gain_loss / cost_basis * 100) as decimal(8,2)) as varchar) || '%'  "total_gain_loss_%"
   from
     _union
 )
