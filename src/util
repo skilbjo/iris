@@ -55,7 +55,7 @@ email_aws(){
   aws ses \
     send-raw-email \
     --region us-east-1 \
-    --raw-message "file:///out/${report}.json"
+    --raw-message "fileb:///out/${report}.json"
 }
 
 email() {
