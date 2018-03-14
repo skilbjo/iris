@@ -1,9 +1,11 @@
-with now as (
-  select cast(current_timestamp at time zone 'America/Los_Angeles' as date) as now
+with now_ts as (
+  select current_timestamp at time zone 'America/Los_Angeles' as now_ts -- for a specifc date: select cast('2018-03-13' as timestamp) as now_ts
+), now as (
+  select cast((select now_ts from now_ts) as date) as now
 ), date as (
   select
     (select now from now) today,
-    case day_of_week(current_timestamp at time zone 'America/Los_Angeles') % 7
+    case day_of_week((select now_ts from now_ts)) % 7
       when 1 then (select now from now) - interval '3' day
       when 0 then (select now from now) - interval '2' day
       else        (select now from now) - interval '1' day
@@ -20,18 +22,18 @@ with now as (
   select
     dataset,
     ticker,
-    cast(date as date)                 as date,
-    cast(open as decimal(10,2))        as open,
-    cast(close as decimal(10,2))       as close,
-    cast(low as decimal(10,2))         as low,
-    cast(high as decimal(10,2))        as high,
-    cast(volume as decimal(20,2))      as volume,
-    cast(split_ratio as decimal(10,2)) as split_ratio,
-    cast(adj_open as decimal(10,2))    as adj_open,
-    cast(adj_close as decimal(10,2))   as adj_close,
-    cast(adj_low as decimal(10,2))     as adj_low,
-    cast(adj_volume as decimal(20,2))  as adj_volume,
-    cast(ex_dividend as decimal(10,2)) as ex_dividend
+    cast(date as date)                     as date,
+    try_cast(open as decimal(10,2))        as open,
+    try_cast(close as decimal(10,2))       as close,
+    try_cast(low as decimal(10,2))         as low,
+    try_cast(high as decimal(10,2))        as high,
+    try_cast(volume as decimal(20,2))      as volume,
+    try_cast(split_ratio as decimal(10,2)) as split_ratio,
+    try_cast(adj_open as decimal(10,2))    as adj_open,
+    try_cast(adj_close as decimal(10,2))   as adj_close,
+    try_cast(adj_low as decimal(10,2))     as adj_low,
+    try_cast(adj_volume as decimal(20,2))  as adj_volume,
+    try_cast(ex_dividend as decimal(10,2)) as ex_dividend
   from
     dw.equities
   where
@@ -72,7 +74,7 @@ with now as (
     today.market_value - yesterday.yesterday today_gain_loss
   from
     today
-    full outer join yesterday on today.ticker = yesterday.ticker
+    join yesterday on today.ticker = yesterday.ticker
   order by today.market_value desc
 ), summary as (
   select
