@@ -18,6 +18,4 @@ deployment:
     branch: /.*/
     commands:
       - deploy/bin/publish-image
-      - docker images
       - deploy/bin/minicon
-
