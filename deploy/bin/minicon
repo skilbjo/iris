@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+minidock \
+  -i quay.io/skilbjo/iris:x86-debian -t quay.io/skilbjo/iris:minicon --mode loose --apt \
+  -E bash -E aws -E jq -E cat -E mkdir -E date -E touch -E sed -E tr -E base64 -E sleep \
+  --include '/usr/local/resources/*' \
+  -E '/usr/local/deploy/bin/run-job' -E '/usr/local/src/iris' -E '/usr/local/src/athena' -E '/usr/local/src/util' \
+  -- /usr/local/deploy/bin/run-job
+
+docker push quay.io/skilbjo/iris:minicon
