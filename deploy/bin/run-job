@@ -16,7 +16,6 @@ case $(cat /etc/os-release | grep -i '^name=' | sed 's/NAME=//' | sed 's/^"\(.*\
   'Alpine Linux' )
     apk fix || echo 'Unable to reach apk... continuing...' ;;
   'Debian GNU/Linux' )
-    apt-get install -y postgresql-client postfix mutt vim
     echo '' ;; # Any quirks with Debian can go here
 esac
 set -e

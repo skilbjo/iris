@@ -2,6 +2,13 @@ machine:
   services:
     - docker
 
+dependencies:
+  pre:
+    - sudo apt update
+    - sudo apt install jq -y
+    - wget --directory-prefix=/home/ubuntu https://github.com/grycap/minicon/releases/download/1.2-2/minicon_1.2-2.deb
+    - sudo dpkg -i /home/ubuntu/minicon_1.2-2.deb
+
 test:
   override:
     - echo 'A okay here...'
@@ -11,4 +18,3 @@ deployment:
     branch: /.*/
     commands:
       - deploy/bin/publish-image
-

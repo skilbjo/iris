@@ -30,6 +30,31 @@ publish_x86_debian() {
     deploy/bin/publish-x86-debian
 }
 
+build_minidocker_image() {
+  local app=$(basename $(pwd))
+  local image="quay.io/skilbjo/${app}"
+  local x86_tag=''
+  local tag=''
+  if [[ $CIRCLE_BRANCH == master ]]; then
+    x86_tag='x86-debian'
+    tag='minicon'
+  else
+    x86_tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_x86-debian"
+    tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_minicon"
+  fi
+
+  minidock \
+    -i $image:$x86_tag -t $image:$tag --apt \
+    --include '/usr/local/resources/*' \
+    -E bash -E aws -E jq -E cat -E mkdir -E date -E touch -E sed -E tr -E base64 -E sleep -E grep -E uname \
+    -E '/usr/local/deploy/bin/run-job' -E '/usr/local/src/iris' -E '/usr/local/src/athena' -E '/usr/local/src/util' \
+    -- /usr/local/deploy/bin/run-job
+
+  docker login -u $QUAY_ROBOT_USERNAME -p $QUAY_ROBOT_PASSWORD -e 'skilbjo@github.com' 'quay.io'
+  docker tag $image:$tag $image:$CIRCLE_SHA1
+  docker push $image
+}
+
 publish_arm() {
   if [[ -f Dockerfile ]]; then rm Dockerfile; fi
   if [[ -d target     ]]; then rm -rf target; fi
@@ -45,6 +70,8 @@ publish_arm() {
     deploy/bin/publish-arm
 }
 
-publish_arm && \
-  publish_x86 && \
-  publish_x86_debian
+publish_x86 && \
+  publish_x86_debian && \
+  build_minidocker_image
+
+publish_arm
