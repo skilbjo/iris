@@ -38,12 +38,7 @@ _report_athena(){
   report="$1"
 
   query "$(cat ${resources_dir}/${report}_athena.sql)" >"/out/${report}.csv" # csv
-
-  echo '<table border="2" cellspacing="1" cellpadding="2">'        >"/out/${report}"
-  while read INPUT ; do
-    echo "<tr><td align='center'>${INPUT//,/</td><td>}</td></tr>" >>"/out/${report}" ;
-  done < "/out/${report}.csv" ;
-  echo '</table>'                                                 >>"/out/${report}"
+  csv_to_html $report >"/out/${report}"                                      # html
 
   email_aws $report
 }
