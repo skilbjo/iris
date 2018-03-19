@@ -69,6 +69,25 @@ email() {
   sleep 5
 }
 
+csv_to_html(){
+  local report="$1"
+
+  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"/tmp/${report}"
+  local header='true'
+  cat "/out/${report}.csv" | while read line; do
+    if [[ $header == 'true' ]]; then
+      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"/tmp/${report}";
+      header='false';
+    else
+      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"/tmp/${report}";
+    fi
+  done
+  echo '</table>'                                                  >>"/tmp/${report}"
+
+  cat "/tmp/${report}"
+}
+
+
 exit_if(){
   case "$@" in
     weekend )

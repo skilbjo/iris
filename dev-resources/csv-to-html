@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+csv_to_html(){
+  report="$1"
+
+  echo '<table border="2" cellspacing="1" cellpadding="2">'         >./report.html;
+  local header='true'
+  cat $report | while read line; do
+    if [[ $header == 'true' ]]; then
+      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>./report.html ;
+      header='false'
+    else
+      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>./report.html ;
+    fi
+  done
+  echo '</table>'                                                  >>./report.html;
+}
+
+csv_to_html ./portfolio.csv
+
+cat ./report.html
