@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+project='iris'
+
+curl "https://circleci.com/api/v1.1/project/github/skilbjo/${project}/config-translation?circle-token=${circle_token}"
