@@ -16,7 +16,7 @@ fi
 
 echo $(git rev-parse HEAD) >.tag
 
-docker login -u $QUAY_ROBOT_USERNAME -p $QUAY_ROBOT_PASSWORD -e 'skilbjo@github.com' $registry
+docker login -u $QUAY_ROBOT_USERNAME -p $QUAY_ROBOT_PASSWORD $registry
 docker build --rm -t $image:$tag .
 docker tag $image:$tag $image:$CIRCLE_SHA1
 docker push $image
