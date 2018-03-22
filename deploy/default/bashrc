@@ -5,4 +5,4 @@ bind 'set visible-stats on'
 bind 'set page-completions off'
 
 alias ..='cd ..'
-alias ll='ls -lh'
+alias ll='ls -lah'
