@@ -6,10 +6,9 @@ deploy_dir="usr/local/deploy/bin"
 cmd="${src_dir}/iris"
 
 # Prereqs
-set +e
 case $(uname -a) in
   *arm* )
-    eval "${deploy_dir}/apk" ;;
+    set +e; eval "${deploy_dir}/apk"; set -e; ;; # set +e when apk not available
 esac
 
 case $(cat /etc/os-release | grep -i '^name=' | sed 's/NAME=//' | sed 's/^"\(.*\)"$/\1/') in
