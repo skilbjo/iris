@@ -1,20 +1,17 @@
-machine:
-  services:
-    - docker
+version: 2
+jobs:
+  build:
+    working_directory: ~/iris
+    machine: true
+    steps:
+      - checkout
+      - run: wget --directory-prefix=/home/circleci https://github.com/grycap/minicon/releases/download/1.2-2/minicon_1.2-2.deb
+      - run: sudo apt update; sudo apt install -qq jq; sudo dpkg -i /home/circleci/minicon_1.2-2.deb
+      - run: docker info >/dev/null 2>&1 || service docker start
+      - run: deploy/bin/publish-image
 
-dependencies:
-  pre:
-    - sudo apt update
-    - sudo apt install jq -y
-    - wget --directory-prefix=/home/ubuntu https://github.com/grycap/minicon/releases/download/1.2-2/minicon_1.2-2.deb
-    - sudo dpkg -i /home/ubuntu/minicon_1.2-2.deb
-
-test:
-  override:
-    - echo 'A okay here...'
-
-deployment:
-  quay:
-    branch: /.*/
-    commands:
-      - deploy/bin/publish-image
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
