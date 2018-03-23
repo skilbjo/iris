@@ -8,12 +8,12 @@ cmd="${src_dir}/iris"
 # Prereqs
 case $(uname -a) in
   *arm* )
-    set +e; eval "${deploy_dir}/apk"; set -e; ;; # set +e when apk not available
+    set +e; eval "${deploy_dir}/apk"; update-ca-certificates; apk fix || echo 'Unable to reach apk...'; set -e; ;; # set +e when apk not available
 esac
 
 case $(cat /etc/os-release | grep -i '^name=' | sed 's/NAME=//' | sed 's/^"\(.*\)"$/\1/') in
   'Alpine Linux' )
-    apk fix || echo 'Unable to reach apk... continuing...' ;;
+    update-ca-certificates; apk fix || echo 'Unable to reach apk...' ;; # Any quirks with Alpine can go here
   'Debian GNU/Linux' )
     echo '' ;; # Any quirks with Debian can go here
 esac
