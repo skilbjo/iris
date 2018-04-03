@@ -12,28 +12,28 @@ with now as (
   select
     markets.description,
     markets.ticker,
-    sum((quantity * cost_per_share))                        cost_basis,
-    sum((quantity * close))                                 market_value,
-    sum(((quantity * close) - (quantity * cost_per_share))) gain_loss
+    sum((quantity * cost_per_share))                 cost_basis,
+    sum((quantity * coalesce(close,cost_per_share))) market_value,
+    sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     dw.equities
-    join dw.portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
-    join dw.markets on equities.dataset = markets.dataset and equities.ticker = markets.ticker
+    right join dw.portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
+    join dw.markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
-    date in ( select today from date )
+    date in ( select today from date ) or date is null
   group by
     1,2
 ), yesterday as (
   select
     markets.description,
     markets.ticker,
-    sum((quantity * close))                                 yesterday
+    sum((quantity * coalesce(close,cost_per_share))) yesterday
   from
     dw.equities
-    join dw.portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
-    join dw.markets on equities.dataset = markets.dataset and equities.ticker = markets.ticker
+    right join dw.portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
+    join dw.markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
-    date in ( select yesterday from date )
+    date in ( select yesterday from date ) or date is null
   group by
     1,2
 ), detail as (
