@@ -43,7 +43,7 @@ with now as (
     today.market_value - yesterday.yesterday today_gain_loss
   from
     today
-    join yesterday on today.ticker = yesterday.ticker
+    full outer join yesterday on today.ticker = yesterday.ticker
   order by today.market_value desc
 ), summary as (
   select
