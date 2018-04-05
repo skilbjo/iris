@@ -20,7 +20,11 @@ with now as (
     right join dw.portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
     join dw.markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
-    date in ( select today from date ) or date is null
+    date in ( select today from date )
+    or (case when markets.ticker in ('VGWAX') and date is null then 1 else 0 end)
+       = 1 -- VGWAX is too "new" of a ticker; hopefull will be added soon
+    or (case when markets.ticker in ('VMMXX') and date in (select yesterday from date) then 1 else 0 end)
+       = 1 -- VMMXX is only updated as of yesterday, by Morningstar
   group by
     1,2
 ), yesterday as (
