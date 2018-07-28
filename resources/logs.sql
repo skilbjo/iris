@@ -5,10 +5,10 @@ with dates as (
 )
 select * from crosstab (
   'select date,device,count(*)
-   from dw.log
+   from logs.log
    group by 1,2
    order by 1,2',
-  'select distinct device from dw.log order by 1'
+  'select distinct device from logs.log order by 1'
 )  as ct (date date,firewall int, pfsense int, pfsense2 int, router int)
 where date between (select _start from dates)
                and (select _end   from dates)
