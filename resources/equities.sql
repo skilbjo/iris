@@ -4,6 +4,6 @@ with date as (
 select
   _t.*
 from
-  dw.equities _t
+  dw.equities_fact _t
 where
   _t.date in ( select now from date )
