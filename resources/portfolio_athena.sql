@@ -49,7 +49,7 @@ with now_ts as (
   from
     _equities equities
     right join _portfolio portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
-    join dw.markets_dim on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
+    join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
     date in ( select today from date )
     or (case when markets.ticker in ('VGWAX') and date is null then 1 else 0 end)
@@ -66,7 +66,7 @@ with now_ts as (
   from
     _equities equities
     right join _portfolio portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
-    join dw.markets_dim on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
+    join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
     date in ( select yesterday from date ) or date is null
   group by
