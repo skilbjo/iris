@@ -77,7 +77,7 @@ with now as (
     0 today_gain_loss
   from
     detail
-    left join backup on detail.description = backup.description
+    full outer join backup on detail.description = backup.description
 ), summary as (
   select
     'Portfolio Total'::text description,
@@ -101,4 +101,4 @@ with now as (
   from
     _union
 )
-select * from detail_with_backup
+select * from report
