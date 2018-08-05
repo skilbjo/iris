@@ -27,6 +27,8 @@ with now as (
        = 1 -- VGWAX is too "new" of a ticker; hopefull will be added soon
     or (case when markets.ticker in ('VMMXX') and date in (select yesterday from date) then 1 else 0 end)
        = 1 -- VMMXX is only updated as of yesterday, by Morningstar
+    or (case when markets.ticker in ('VMMXX') and date is null then 1 else 0 end)
+       = 1 -- VMMXX not available via TIINGO api
   group by
     1,2
 ), yesterday as (
