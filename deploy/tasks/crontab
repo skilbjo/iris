@@ -6,4 +6,7 @@
   app_dir="/home/skilbjo/deploy/app/iris"
 
 ## -- jobs ----------------------------------------
+### when morningstar api is ready
+21 15 * * * skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
+### when tiingo api is ready
 25 16 * * * skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
