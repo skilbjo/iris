@@ -1,33 +1,35 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 publish_x86() {
   if [[ -f Dockerfile ]]; then rm Dockerfile; fi
   if [[ -d target     ]]; then rm -rf target; fi
 
-  cat deploy/default/publish-image | \
+  cat "${dir}/../default/publish-image" | \
     sed "s/tag='latest'/tag='x86'/g" | \
     sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-x86/g' | \
     sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_x86"/g' \
-    >>deploy/bin/publish-x86
+    >>"${dir}/publish-x86"
 
-  chmod u+x deploy/bin/publish-x86 && \
-    deploy/bin/publish-x86
+  chmod u+x "${dir}/publish-x86" && \
+    "${dir}/publish-x86"
 }
 
 publish_x86_debian() {
   if [[ -f Dockerfile ]]; then rm Dockerfile; fi
   if [[ -d target     ]]; then rm -rf target; fi
 
-  cat deploy/default/publish-image | \
+  cat "${dir}/../default/publish-image" | \
     sed "s/cat '.\/deploy\/default\/Dockerfile'/cat '.\/deploy\/default\/Dockerfile.debian'/g" | \
     sed "s/tag='latest'/tag='x86-debian'/g" | \
     sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-x86-debian/g' | \
     sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_x86-debian"/g' \
-    >>deploy/bin/publish-x86-debian
+    >>"${dir}/publish-x86-debian"
 
-  chmod u+x deploy/bin/publish-x86-debian && \
-    deploy/bin/publish-x86-debian
+  chmod u+x "${dir}/publish-x86-debian" && \
+    "${dir}/publish-x86-debian"
 }
 
 build_minidocker_image() {
@@ -62,15 +64,15 @@ publish_arm() {
   if [[ -f Dockerfile ]]; then rm Dockerfile; fi
   if [[ -d target     ]]; then rm -rf target; fi
 
-  cat deploy/default/publish-image | \
+  cat "${dir}/../default/publish-image" | \
     sed "s/cat '.\/deploy\/default\/Dockerfile'/cat '.\/deploy\/default\/Dockerfile.arm'/g" | \
     sed "s/tag='latest'/tag='arm'/g" | \
     sed 's/$image:$CIRCLE_SHA1/$image:$CIRCLE_SHA1-arm/g' | \
     sed 's/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"/tag="${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}_arm"/g' \
-    >>deploy/bin/publish-arm
+    >>"${dir}/publish-arm"
 
-  chmod u+x deploy/bin/publish-arm && \
-    deploy/bin/publish-arm
+  chmod u+x "${dir}/publish-arm" && \
+    "${dir}/publish-arm"
 }
 
 publish_x86 && \
