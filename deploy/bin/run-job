@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -eou pipefail
+set -eoux pipefail
 
 src_dir="usr/local/src"
 deploy_dir="usr/local/deploy/bin"
