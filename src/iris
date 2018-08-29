@@ -25,11 +25,9 @@ _report(){
 _portfolio(){
   setup_email
 
-  # Run every day
-  _report logs
+  #_report logs # this report is a little annoying
 
-  # M-F
-  #exit_if weekend && exit_if holiday  # controlled by cron syntax
+  #exit_if weekend && exit_if holiday  # M-F now controlled by cron syntax
 
   _report portfolio
 }
