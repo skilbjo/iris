@@ -11,6 +11,3 @@
 
 ### when tiingo api is ready
 47 17 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
-52 17 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
-57 17 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
-05 18 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
