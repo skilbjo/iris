@@ -99,8 +99,8 @@ with now as (
     1,2
 ), detail as (
   select
-    coalesce(today.description,yesterday.description) description,
-    coalesce(today.ticker,yesterday.ticker) ticker,
+    coalesce(today.description, yesterday.description) description,
+    coalesce(today.ticker,      yesterday.ticker) ticker,
     today.cost_basis, today.market_value, today.gain_loss,
     today.market_value - ytd.market_value ytd_gain_loss,
     today.market_value - yesterday.yesterday today_gain_loss

@@ -2,6 +2,8 @@ with now_ts as (
   select current_timestamp at time zone 'America/Los_Angeles' as now_ts -- for a specifc date: select cast('2018-03-13' as timestamp) as now_ts
 ), now as (
   select cast((select now_ts from now_ts) as date) as now
+), datasource as (
+  select 'TIINGO' as datasource
 ), date as (
   select
     (select now from now) today,
@@ -54,16 +56,16 @@ with now_ts as (
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     _equities equities
-    right join _portfolio portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
+    right join _portfolio portfolio on equities.dataset  = portfolio.dataset
+                                   and equities.ticker   = portfolio.ticker
+                                   and portfolio.dataset = ( select datasource from datasource )
     join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
-    date in ( select today from date )
-    or (case when markets.ticker in ('VGWAX') and date is null then 1 else 0 end)
-       = 1 -- VGWAX is too "new" of a ticker; hopefull will be added soon
-    or (case when markets.ticker in ('VMMXX') and date is null then 1 else 0 end)
-       = 1 -- VMMXX is only updated as of yesterday, by Morningstar; however because of Athena, it won't get updated
-    or (case when markets.ticker in ('VMMXX') and date is null then 1 else 0 end)
-       = 1 -- VMMXX not available via TIINGO api
+    date = ( select today from date )
+    or (case when markets.ticker in ('VGWAX', 'VMMXX')
+              and markets.dataset in ( select datasource from datasource )
+              and date is null then 1 else 0 end)
+       = 1 -- VGWAX is too "new" of a ticker; hopefull will be added soon, VMMXX not available via TIINGO api
   group by
     1,2
 ), yesterday as (
@@ -73,7 +75,9 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) yesterday
   from
     _equities equities
-    right join _portfolio portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
+    right join _portfolio portfolio on equities.dataset  = portfolio.dataset
+                                   and equities.ticker   = portfolio.ticker
+                                   and portfolio.dataset = ( select datasource from datasource )
     join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
     date in ( select yesterday from date ) or date is null
@@ -86,7 +90,9 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) market_value
   from
     _equities equities
-    right join _portfolio portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
+    right join _portfolio portfolio on equities.dataset  = portfolio.dataset
+                                   and equities.ticker   = portfolio.ticker
+                                   and portfolio.dataset = ( select datasource from datasource )
     join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
     date = ( select beginning_of_year from beginning_of_year )
@@ -101,7 +107,9 @@ with now_ts as (
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     _equities equities
-    right join _portfolio portfolio on equities.dataset = portfolio.dataset and equities.ticker = portfolio.ticker
+    right join _portfolio portfolio on equities.dataset  = portfolio.dataset
+                                   and equities.ticker   = portfolio.ticker
+                                   and portfolio.dataset = ( select datasource from datasource )
     join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
     date in ( select max_known_date from max_known_date )
@@ -111,7 +119,8 @@ with now_ts as (
     1,2
 ), detail as (
   select
-    coalesce(today.description,yesterday.description) description,
+    coalesce(today.description, yesterday.description) description,
+    coalesce(today.ticker, yesterday.ticker) ticker,
     today.cost_basis, today.market_value, today.gain_loss,
     today.market_value - ytd.market_value ytd_gain_loss,
     today.market_value - yesterday.yesterday today_gain_loss
@@ -123,6 +132,7 @@ with now_ts as (
 ), detail_with_backup as (
   select
     coalesce(detail.description,  backup.description) description,
+    coalesce(detail.ticker,       backup.ticker) ticker,
     coalesce(detail.cost_basis,   backup.cost_basis) cost_basis,
     coalesce(detail.market_value, backup.market_value) market_value,
     coalesce(detail.gain_loss,    backup.gain_loss) gain_loss,
@@ -135,6 +145,7 @@ with now_ts as (
 ), summary as (
   select
     'Portfolio Total'       description,
+    'TOTAL'                 ticker,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
     sum(gain_loss)          gain_loss,
@@ -148,7 +159,9 @@ with now_ts as (
   select * from detail_with_backup
 ), report as (
   select
-    description, cast(cost_basis as integer) cost_basis, cast(market_value as integer) market_value,
+    ticker
+    description,
+    cast(cost_basis as integer) cost_basis, cast(market_value as integer) market_value,
     cast(today_gain_loss as integer) today_gain_loss,
     cast(cast((today_gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "today_gain_loss_%",
     cast(ytd_gain_loss as integer) today_gain_loss,
