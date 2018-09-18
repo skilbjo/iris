@@ -152,4 +152,4 @@ with now as (
   from
     _union
 )
-select * from report
+select * from report order by market_value desc
