@@ -27,8 +27,6 @@ _portfolio(){
 
   #_report logs # this report is a little annoying
 
-  #exit_if weekend && exit_if holiday  # M-F now controlled by cron syntax
-
   _report portfolio
 }
 
@@ -42,12 +40,17 @@ _report_athena(){
 }
 
 _portfolio_aws(){
-  #exit_if weekend      # controlled by cloudwatch cron syntax
-
   setup_aws
 
   _report_athena portfolio
 }
 
-setup \
-  && set +u; if [[ ! -z $db_uri ]]; then _portfolio; else _portfolio_aws; fi; set -u
+setup
+set +u; \
+  if [[ ! -z $db_uri ]]; then \
+    _portfolio && \
+      ping_healthchecks "$healthchecks_io_iris"; \
+  else \
+    _portfolio_aws; \
+  fi; \
+set -u

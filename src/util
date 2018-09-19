@@ -87,7 +87,6 @@ csv_to_html(){
   cat "/tmp/${report}"
 }
 
-
 exit_if(){
   case "$@" in
     weekend )
@@ -108,4 +107,10 @@ exit_if(){
     *)
       ;;
   esac
+}
+
+ping_healthchecks(){
+  job_uuid="$1"
+
+  curl -fsS --retry 3 "https://hc-ping.com/${job_uuid}"
 }
