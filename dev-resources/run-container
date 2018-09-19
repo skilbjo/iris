@@ -17,4 +17,5 @@ docker run -it --rm \
   -e aws_secret_access_key="$(echo '')" \
   -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
+  -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
   "$app_name":dev bash
