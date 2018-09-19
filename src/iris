@@ -27,8 +27,6 @@ _portfolio(){
 
   #_report logs # this report is a little annoying
 
-  #exit_if weekend && exit_if holiday  # M-F now controlled by cron syntax
-
   _report portfolio
 }
 

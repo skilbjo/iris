@@ -87,7 +87,6 @@ csv_to_html(){
   cat "/tmp/${report}"
 }
 
-
 exit_if(){
   case "$@" in
     weekend )
