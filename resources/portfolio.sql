@@ -17,7 +17,9 @@ with now as (
     --  select '2018-01-02' beginning_of_year
 ), equities as (
   select
-    *
+    ticker,
+    date,
+    close
   from
     dw.equities_fact
   where
@@ -26,6 +28,22 @@ with now as (
     or date = ( select max_known_date from max_known_date )
     or date = ( select beginning_of_year from beginning_of_year )
     or date is null
+  group by
+    1,2,3
+), portfolio as (
+  select
+    *
+  from
+    dw.portfolio_dim
+  where
+    dataset = ( select datasource from datasource )
+), markets as (
+  select
+    *
+  from
+    dw.markets_dim
+  where
+    dataset = ( select datasource from datasource )
 ), today as (
   select
     markets.description,
@@ -35,10 +53,10 @@ with now as (
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     equities
-    right join dw.portfolio_dim portfolio on equities.dataset  = portfolio.dataset
-                                         and equities.ticker   = portfolio.ticker
-                                         and portfolio.dataset = ( select datasource from datasource )
-    join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
+    right join portfolio on equities.ticker   = portfolio.ticker
+                        and equities.dataset  = portfolio.dataset
+                        and portfolio.dataset = ( select datasource from datasource )
+    join markets on portfolio.ticker = markets.ticker
   where
     date = ( select today from date )
     or (case when markets.ticker in ('VGWAX', 'VMMXX')
@@ -54,10 +72,10 @@ with now as (
     sum((quantity * coalesce(close,cost_per_share))) yesterday
   from
     equities
-    right join dw.portfolio_dim portfolio on equities.dataset  = portfolio.dataset
-                                         and equities.ticker   = portfolio.ticker
-                                         and portfolio.dataset = ( select datasource from datasource )
-    join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
+    right join portfolio on equities.ticker   = portfolio.ticker
+                        and equities.dataset  = portfolio.dataset
+                        and portfolio.dataset = ( select datasource from datasource )
+    join markets on portfolio.ticker = markets.ticker
   where
     date in ( select yesterday from date )
   group by
@@ -69,10 +87,10 @@ with now as (
     sum((quantity * coalesce(close,cost_per_share))) market_value
   from
     equities
-    right join dw.portfolio_dim portfolio on equities.dataset  = portfolio.dataset
-                                         and equities.ticker   = portfolio.ticker
-                                         and portfolio.dataset = ( select datasource from datasource )
-    join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
+    right join portfolio on equities.dataset  = portfolio.dataset
+                        and equities.ticker   = portfolio.ticker
+                        and portfolio.dataset = ( select datasource from datasource )
+    join markets on portfolio.ticker = markets.ticker
   where
     date = ( select beginning_of_year from beginning_of_year )
   group by
@@ -86,10 +104,10 @@ with now as (
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     equities
-    right join dw.portfolio_dim portfolio on equities.dataset  = portfolio.dataset
-                                         and equities.ticker   = portfolio.ticker
-                                         and portfolio.dataset = ( select datasource from datasource )
-    join dw.markets_dim markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
+    right join portfolio on equities.dataset  = portfolio.dataset
+                        and equities.ticker   = portfolio.ticker
+                        and portfolio.dataset = ( select datasource from datasource )
+    join markets on portfolio.dataset = markets.dataset and portfolio.ticker = markets.ticker
   where
     date in ( select max_known_date from max_known_date )
     or (case when markets.ticker in ('VGWAX', 'VMMXX')
