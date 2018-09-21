@@ -1,7 +1,8 @@
 with now as (
   select (now() at time zone 'pst')::date now
 ), datasource as (
-  select 'TIINGO'::text as datasource
+  select 'ALPHA-VANTAGE'::text as datasource
+--  select 'TIINGO'::text as datasource
 ), date as (
   select
     (select now from now) today,
@@ -33,12 +34,16 @@ with now as (
 ), portfolio as (
   select
     markets.description,
-    portfolio.*
+    portfolio.ticker,
+    portfolio.quantity,
+    portfolio.cost_per_share
   from
     dw.portfolio_dim portfolio
     join dw.markets_dim markets on markets.ticker = portfolio.ticker
   where
     portfolio.dataset = ( select datasource from datasource )
+  group by
+    1,2,3,4
 ), today as (
   select
     portfolio.description,
