@@ -46,5 +46,6 @@ docker run --rm \
   -e db_uri="$(echo $db_uri)" \
   -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
+  -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
   "$img" \
   "$job_cmd" $@
