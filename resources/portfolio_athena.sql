@@ -150,9 +150,9 @@ with now_ts as (
     cast(today_gain_loss as integer) today_gain_loss,
     cast(cast((today_gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "today_gain_loss_%",
     cast(ytd_gain_loss as integer) today_gain_loss,
-    cast(cast((ytd_gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "ytd_gain_loss_%",
+    cast(cast((ytd_gain_loss / market_value * 100) as decimal(8,2)) as varchar)   || '%'  "ytd_gain_loss_%",
     cast(gain_loss as integer) total_gain_loss,
-    cast(cast((gain_loss / cost_basis * 100) as decimal(8,2)) as varchar) || '%'  "total_gain_loss_%"
+    cast(cast((gain_loss / cost_basis * 100) as decimal(8,2)) as varchar)         || '%'  "total_gain_loss_%"
   from
     _union
 )
