@@ -16,22 +16,11 @@ with now_ts as (
   select max(cast(date as date)) max_known_date from dw.equities_fact
 ), beginning_of_year as (
   select date_trunc('year', ( select now from now)) + interval '1' day beginning_of_year
-), _equities as (
+), equities as (
   select
-    dataset,
     ticker,
     cast(date as date)                     as date,
-    try_cast(open as decimal(10,2))        as open,
-    try_cast(close as decimal(10,2))       as close,
-    try_cast(low as decimal(10,2))         as low,
-    try_cast(high as decimal(10,2))        as high,
-    try_cast(volume as decimal(20,2))      as volume,
-    try_cast(split_ratio as decimal(10,2)) as split_ratio,
-    try_cast(adj_open as decimal(10,2))    as adj_open,
-    try_cast(adj_close as decimal(10,2))   as adj_close,
-    try_cast(adj_low as decimal(10,2))     as adj_low,
-    try_cast(adj_volume as decimal(20,2))  as adj_volume,
-    try_cast(ex_dividend as decimal(10,2)) as ex_dividend
+    try_cast(close as decimal(10,2))       as close
   from
     dw.equities_fact equities
   where
@@ -39,7 +28,9 @@ with now_ts as (
     or s3uploaddate = cast((select yesterday from date) as date)
     or s3uploaddate = cast((select max_known_date from max_known_date) as date)
     or s3uploaddate = cast((select beginning_of_year from beginning_of_year) as date)
-), _portfolio as (
+  group by
+    1,2,3
+), portfolio as (
   select
     markets.description,
     portfolio.ticker,
@@ -60,13 +51,13 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) market_value,
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
-    _equities equities
-    right join _portfolio portfolio on portfolio.ticker = equities.ticker
+    equities
+    right join portfolio on portfolio.ticker = equities.ticker
   where
     date = ( select today from date )
-    or (case when equities.ticker in ('VGWAX', 'VMMXX')
-              and date is null then 1 else 0 end)
-       = 1 -- VGWAX is too "new" of a ticker; hopefull will be added soon, VMMXX not available via TIINGO api
+    or (case when equities.ticker in ('VMMXX')
+              and date = (select beginning_of_year from beginning_of_year) then 1 else 0 end)
+       = 1 -- VMMXX not available via TIINGO api
   group by
     1,2
 ), yesterday as (
@@ -75,8 +66,8 @@ with now_ts as (
     equities.ticker,
     sum((quantity * coalesce(close,cost_per_share))) yesterday
   from
-    _equities equities
-    right join _portfolio portfolio on portfolio.ticker = equities.ticker
+    equities
+    right join portfolio on portfolio.ticker = equities.ticker
   where
     date in ( select yesterday from date ) or date is null
   group by
@@ -87,8 +78,8 @@ with now_ts as (
     equities.ticker,
     sum((quantity * coalesce(close,cost_per_share))) market_value
   from
-    _equities equities
-    right join _portfolio portfolio on portfolio.ticker = equities.ticker
+    equities
+    right join portfolio on portfolio.ticker = equities.ticker
   where
     date = ( select beginning_of_year from beginning_of_year )
   group by
@@ -101,12 +92,13 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) market_value,
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
-    _equities equities
-    right join _portfolio portfolio on portfolio.ticker = equities.ticker
+    equities
+    right join portfolio on portfolio.ticker = equities.ticker
   where
     date in ( select max_known_date from max_known_date )
-    or (case when equities.ticker in ('VGWAX') and date is null then 1 else 0 end)
-       = 1
+    or (case when equities.ticker in ('VMMXX')
+              and date = (select beginning_of_year from beginning_of_year) then 1 else 0 end)
+       = 1 -- VMMXX not available via TIINGO api
   group by
     1,2
 ), detail as (
@@ -123,12 +115,12 @@ with now_ts as (
   order by today.market_value desc
 ), detail_with_backup as (
   select
-    coalesce(detail.description,  backup.description) description,
-    coalesce(detail.ticker,       backup.ticker) ticker,
-    coalesce(detail.cost_basis,   backup.cost_basis) cost_basis,
-    coalesce(detail.market_value, backup.market_value) market_value,
-    coalesce(detail.gain_loss,    backup.gain_loss) gain_loss,
-    coalesce(detail.ytd_gain_loss, backup.market_value - ytd.market_value, 0) ytd_gain_loss,
+    coalesce(detail.description,    backup.description) description,
+    coalesce(detail.ticker,         backup.ticker) ticker,
+    coalesce(detail.cost_basis,     backup.cost_basis) cost_basis,
+    coalesce(detail.market_value,   backup.market_value) market_value,
+    coalesce(detail.gain_loss,      backup.gain_loss) gain_loss,
+    coalesce(detail.ytd_gain_loss,  backup.market_value - ytd.market_value, 0) ytd_gain_loss,
     coalesce(detail.today_gain_loss, 0) today_gain_loss
   from
     detail
@@ -148,12 +140,13 @@ with now_ts as (
 ), _union as (
   select * from summary
   union all
-  select * from detail_with_backup
+  select * from detail_with_backup where ticker <> ''
 ), report as (
   select
-    ticker
+    ticker,
     description,
-    cast(cost_basis as integer) cost_basis, cast(market_value as integer) market_value,
+    cast(cost_basis as integer) cost_basis,
+    cast(market_value as integer) market_value,
     cast(today_gain_loss as integer) today_gain_loss,
     cast(cast((today_gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "today_gain_loss_%",
     cast(ytd_gain_loss as integer) today_gain_loss,
