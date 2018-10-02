@@ -29,7 +29,7 @@ with now as (
   select
     ticker,
     date,
-    close
+    avg(close) as close
   from
     dw.equities_fact
   where
@@ -39,7 +39,7 @@ with now as (
     or date = ( select beginning_of_year from beginning_of_year )
     or date is null
   group by
-    1,2,3
+    1,2
 ), portfolio as (
   select
     markets.description,
