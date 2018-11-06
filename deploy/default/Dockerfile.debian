@@ -1,6 +1,6 @@
 FROM bitnami/minideb:stretch
 
-ENV CMD="usr/local/deploy/bin/run-job" \
+ENV CMD="/usr/local/deploy/bin/run-job" \
     DEBIAN_FRONTEND="noninteractive"
 
 

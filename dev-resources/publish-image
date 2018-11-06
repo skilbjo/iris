@@ -3,12 +3,83 @@ set -eou pipefail
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 app=$(basename $(dirname $dir))
-image_tag='dev'
 
-cd "${dir}/.."
-cp "${dir}/../deploy/default/Dockerfile" Dockerfile
+publish_image(){
+  local image_tag='dev'
 
-docker build --rm -t $app:$image_tag .
-docker tag $app:$image_tag $app
+  cd "${dir}/.."
+  cp "${dir}/../deploy/default/Dockerfile" Dockerfile
 
-rm Dockerfile
+  docker build --rm -t $app:$image_tag .
+  docker tag $app:$image_tag $app
+
+  rm Dockerfile
+}
+
+publish_image_arm(){
+  local image_tag='arm_dev'
+
+  if [[ $(cat /etc/os-release | grep 'Linux') == 'Linux' ]] && [[ -f /etc/os-release ]]; then
+    echo 'In Arch Linux... proceeding...'
+  else
+    #
+    echo 'Not running in Linux. Try again inside a Debian VM.' 2>&1 && exit 1
+  fi
+
+  cd "${dir}/.."
+  cp "${dir}/../deploy/default/Dockerfile" Dockerfile
+
+  docker build --rm -t $app:$image_tag .
+  docker tag $app:$image_tag $app
+
+  rm Dockerfile
+}
+
+publish_x86_debian(){
+  local image_tag='x86-debian_dev'
+
+  cd "${dir}/.."
+  cp "${dir}/../deploy/default/Dockerfile.debian" Dockerfile
+
+  docker build --rm -t $app:$image_tag .
+  docker tag $app:$image_tag $app
+
+  rm Dockerfile
+}
+
+# this can only be run on a Linux machine
+build_minidocker_image(){
+  local x86_tag='x86-debian_dev'
+  local image_tag='x86-debian-minicon_dev'
+
+  if [[ $(cat /etc/os-release | grep 'Linux') == 'Linux' ]] && [[ -f /etc/os-release ]]; then
+    source "./util"
+    get_udocker
+  else
+    echo 'Not running in Linux. Try again inside a Debian VM.' 2>&1 && exit 1
+  fi
+
+  publish_x86_debian
+
+  minidock \
+    -i $image:$x86_tag -t $image:$tag --apt \
+    --include '/usr/local/resources/*' \
+    --include '/usr/local/lib/python2.7/dist-packages/*' \
+    --include '/usr/lib/python2.7/*' \
+    --include '/usr/lib/python3.5/*' \
+    -E bash -E aws -E jq -E cat -E mkdir -E date -E touch -E sed -E tr -E base64 -E sleep -E grep -E uname -E curl \
+    -E '/usr/local/deploy/bin/run-job' -E '/usr/local/src/iris' -E '/usr/local/src/athena' -E '/usr/local/src/util' \
+    -- /usr/local/deploy/bin/run-job
+
+  docker login -u $QUAY_ROBOT_USERNAME -p $QUAY_ROBOT_PASSWORD 'quay.io'
+  docker tag $app:$image_tag $app
+  docker push $image
+}
+
+publish_image
+
+#publish_x86_debian
+
+# this can only be run on a Linux machine
+#publish_image_arm
+#build_minidocker_image

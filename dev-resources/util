@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+# this can only be run on a Linux machine
+get_udocker(){
+  export UDOCKER_DIR=/tmp
+  export UDOCKER_TARBALL='/tmp/udocker-1.1.0-RC2.tar.gz'
+
+  curl \
+    https://raw.githubusercontent.com/skilbjo/lambdas/master/iris/resources/udocker \
+    >/tmp/udocker
+
+  chmod +x /tmp/udocker
+
+  curl \
+    https://raw.githubusercontent.com/skilbjo/lambdas/master/iris/resources/udocker-1.1.0-RC2.tar.gz \
+    >/tmp/udocker-1.1.0-RC2.tar.gz
+
+  tar --directory='/tmp' -xf /tmp/udocker-1.1.0-RC2.tar.gz
+
+  /tmp/udocker install
+}

@@ -1,6 +1,6 @@
 FROM resin/armhf-alpine:3.5
 
-ENV CMD="usr/local/deploy/bin/run-job" \
+ENV CMD="/usr/local/deploy/bin/run-job" \
     QEMU_EXECVE=1
 
 COPY deploy/qemu/qemu-arm-static /usr/bin/
