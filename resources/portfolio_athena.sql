@@ -3,7 +3,7 @@ with now_ts as (
 ), now as (
   select cast((select now_ts from now_ts) as date) as now
 ), datasource as (
-  select 'TIINGO' as datasource
+  select 'ALPHA-VANTAGE' as datasource
 ), date as (
   select
     (select now from now) today,
