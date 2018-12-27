@@ -1,52 +1,28 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-app_name=$(basename $(dirname $dir))
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../" && pwd )" && cd "$dir"
+app="$(basename $dir)"
 
 # db
   #-e db_uri="$(echo $db_uri)" \
   #-e db_uri="$(echo 'postgres://postgres@192.168.99.100:5432/postgres')" \
 
 run_container(){
+  local tag="$1"
+
   docker run -it --rm \
-    --name="$(echo $app_name)" \
+    --name="$(echo $app)" \
     -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
     -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
     -e _email="$(echo $email)" \
     -e email_pw="$(echo $email_pw)" \
     -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
-    "$app_name":dev bash
-}
-
-run_arm(){
-  local image_tag='arm_dev'
-
-  docker run -it --rm \
-    --name="$(echo $app_name)" \
-    -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
-    -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
-    -e _email="$(echo $email)" \
-    -e email_pw="$(echo $email_pw)" \
-    -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
-    "${app_name}:${image_tag}" bash
-}
-
-run_debian(){
-  local image_tag='x86-debian_dev'
-
-  docker run -it --rm \
-    --name="$(echo $app_name)" \
-    -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
-    -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
-    -e _email="$(echo $email)" \
-    -e email_pw="$(echo $email_pw)" \
-    -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
-    "${app_name}:${image_tag}" bash
+    "${app}:${tag}" bash
 }
 
 run_minidock(){
-  local image_tag='x86-debian-minicon_dev'
+  local tag='debian-minicon-dev'
 
   if [[ $(cat /etc/os-release | grep 'Linux') == 'Linux' ]] && [[ -f /etc/os-release ]]; then
     source "./util"
@@ -55,8 +31,8 @@ run_minidock(){
     echo 'Not running in Linux. Try again inside a Debian VM.' 2>&1 && exit 1
   fi
 
-  /tmp/udocker pull "${app}:${image_tag}"
-  /tmp/udocker create --name="$app" "${app}:${image_tag}"
+  /tmp/udocker pull "${app}:${tag}"
+  /tmp/udocker create --name="$app" "${app}:${tag}"
   /tmp/udocker setup --execmode=F1 "$app"
 
   /tmp/udocker run --nosysdirs \
@@ -68,10 +44,9 @@ run_minidock(){
     _ /bin/bash -c '/usr/local/deploy/bin/run-job'
 }
 
-run_container
-
-#run_debian
+run_container 'dev'
+run_container 'debian-dev'
 
 # this can only be run on a Linux machine
+#run_container 'arm-dev'
 #run_minidock
-#run_arm

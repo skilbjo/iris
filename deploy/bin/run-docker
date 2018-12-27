@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-app_name=$(basename $(dirname $(dirname $dir)))
-arch=""
-
-cd "${dir}/../.."
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../" && pwd )" && cd "$dir"
+app="$(basename $(pwd))"
+arch=''
 
 case "$(uname -a)" in
   *amd64* | *x_86* | *x86_64* )
-    arch="x86" ;;
+    img="quay.io/skilbjo/${app}:latest" ;;
   *arm* )
-    arch="arm" ;;
+    arch='arm'
+    img="quay.io/skilbjo/${app}:${arch}" ;;
 esac
 
-img="quay.io/skilbjo/$app_name:$arch"
-job_cmd="usr/local/deploy/bin/run-job"
+job_cmd='/usr/local/deploy/bin/run-job'
 
 get_current_artifacts(){
   # any scripts need updating?
@@ -24,17 +22,17 @@ get_current_artifacts(){
   # remove all app containers
   set +e
   ## below not needed as the docker run cmd has the --rm flag
-  #docker ps -a | grep "$app_name" | awk '{print $1}' | uniq | xargs docker rm -f
+  #docker ps -a | grep "$app" | awk '{print $1}' | uniq | xargs docker rm -f
 
   # remove all app images
-  docker images | grep "$app_name" | awk '{print $3}' | uniq | xargs docker rmi -f
+  docker images | grep "$app" | awk '{print $3}' | uniq | xargs docker rmi -f
   set -e
 }
 
 update_crond(){
   case "$(uname)" in
-    ('Linux')   sudo cp "${dir}/../tasks/crontab" "/etc/cron.d/${app_name}" ;;
-    ('FreeBSD') sudo cp "${dir}/../tasks/crontab" "/var/cron/tabs/${app_name}" ;;
+    ('Linux')   sudo cp "${dir}/../tasks/crontab" "/etc/cron.d/${app}" ;;
+    ('FreeBSD') sudo cp "${dir}/../tasks/crontab" "/var/cron/tabs/${app}" ;;
   esac
 }
 
@@ -42,7 +40,7 @@ get_current_artifacts && \
   update_crond
 
 docker run --rm \
-  --name="$(echo $app_name $@ | tr ' ' '_')" \
+  --name="$(echo $app $@ | tr ' ' '_')" \
   -e db_uri="$(echo $db_uri)" \
   -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
