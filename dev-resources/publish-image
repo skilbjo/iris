@@ -1,50 +1,25 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-app=$(basename $(dirname $dir))
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../" && pwd )" && cd "$dir"
+app="$(basename $dir)"
 
-publish_image(){
-  local image_tag='dev'
+publish(){
+  set +u; local tag="$1"; set -u
+  local tag_suffix='dev'
 
-  cd "${dir}/.."
-  cp "${dir}/../deploy/default/Dockerfile" Dockerfile
-
-  docker build --rm -t $app:$image_tag .
-  docker tag $app:$image_tag $app
-
-  rm Dockerfile
-}
-
-publish_image_arm(){
-  local image_tag='arm_dev'
-
-  if [[ $(cat /etc/os-release | grep 'Linux') == 'Linux' ]] && [[ -f /etc/os-release ]]; then
-    echo 'In Arch Linux... proceeding...'
+  if [[ -z $tag ]]; then
+    cat "${dir}/deploy/default/Dockerfile" >Dockerfile
+    tag="$tag_suffix"
   else
-    #
-    echo 'Not running in Linux. Try again inside a Debian VM.' 2>&1 && exit 1
+    cat "${dir}/deploy/default/${tag}.Dockerfile" >Dockerfile
+    tag="${tag}-${tag_suffix}"
   fi
 
-  cd "${dir}/.."
-  cp "${dir}/../deploy/default/Dockerfile" Dockerfile
+  docker build --rm -t "${app}:${tag}" .
+  docker tag "${app}:${tag}" "$app"
 
-  docker build --rm -t $app:$image_tag .
-  docker tag $app:$image_tag $app
-
-  rm Dockerfile
-}
-
-publish_x86_debian(){
-  local image_tag='x86-debian_dev'
-
-  cd "${dir}/.."
-  cp "${dir}/../deploy/default/Dockerfile.debian" Dockerfile
-
-  docker build --rm -t $app:$image_tag .
-  docker tag $app:$image_tag $app
-
-  rm Dockerfile
+  if [[ -f Dockerfile ]]; then rm Dockerfile; fi
 }
 
 # this can only be run on a Linux machine
@@ -59,7 +34,7 @@ build_minidocker_image(){
     echo 'Not running in Linux. Try again inside a Debian VM.' 2>&1 && exit 1
   fi
 
-  publish_x86_debian
+  publish 'debian'
 
   minidock \
     -i $image:$x86_tag -t $image:$tag --apt \
@@ -76,10 +51,9 @@ build_minidocker_image(){
   docker push $image
 }
 
-publish_image
-
-#publish_x86_debian
+publish && \
+  publish 'arm' && \
+  publish 'debian'
 
 # this can only be run on a Linux machine
-#publish_image_arm
 #build_minidocker_image

@@ -1,4 +1,4 @@
-FROM quay.io/skilbjo/engineering:java-latest
+FROM quay.io/skilbjo/engineering:bash-arm-latest
 
 COPY deploy                      /usr/local/deploy
 COPY src                         /usr/local/src
