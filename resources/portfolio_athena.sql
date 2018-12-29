@@ -2,6 +2,8 @@ with now_ts as (
   select current_timestamp at time zone 'America/Los_Angeles' as now_ts -- for a specifc date: select cast('2018-03-13' as timestamp) as now_ts
 ), now as (
   select cast((select now_ts from now_ts) as date) as now
+), _user as (
+  select 'skilbjo' as _user
 ), datasource as (
   select 'ALPHA-VANTAGE' as datasource
 ), date as (
@@ -63,6 +65,10 @@ with now_ts as (
     1,2
 ), portfolio as (
   select
+    markets.asset_type,
+    markets.location,
+    markets.capitalization,
+    markets.investment_style,
     markets.description,
     portfolio.ticker,
     cast(portfolio.quantity as decimal(10,4))      as quantity,
@@ -71,11 +77,16 @@ with now_ts as (
     dw.portfolio_dim portfolio
     join dw.markets_dim markets on markets.ticker = portfolio.ticker
   where
-    portfolio.dataset = ( select datasource from datasource )
+    portfolio.dataset = 'ALPHA-VANTAGE' --( select datasource from datasource )
+    and user = ( select _user from _user )
   group by
-    1,2,3,4
+    1,2,3,4,5,6,7,8
 ), today as (
   select
+    portfolio.asset_type,
+    portfolio.location,
+    portfolio.capitalization,
+    portfolio.investment_style,
     portfolio.description,
     equities.ticker,
     sum((quantity * cost_per_share))                 cost_basis,
@@ -90,9 +101,13 @@ with now_ts as (
               and date = (select beginning_of_year from beginning_of_year) then 1 else 0 end)
        = 1 -- VMMXX not available via TIINGO api
   group by
-    1,2
+    1,2,3,4,5,6
 ), yesterday as (
   select
+    portfolio.asset_type,
+    portfolio.location,
+    portfolio.capitalization,
+    portfolio.investment_style,
     portfolio.description,
     equities.ticker,
     sum((quantity * coalesce(close,cost_per_share))) yesterday
@@ -102,9 +117,13 @@ with now_ts as (
   where
     date in ( select yesterday from date ) or date is null
   group by
-    1,2
+    1,2,3,4,5,6
 ), ytd as (
   select
+    portfolio.asset_type,
+    portfolio.location,
+    portfolio.capitalization,
+    portfolio.investment_style,
     portfolio.description,
     equities.ticker,
     sum((quantity * coalesce(close,cost_per_share))) market_value
@@ -114,9 +133,13 @@ with now_ts as (
   where
     date = ( select beginning_of_year from beginning_of_year )
   group by
-    1,2
+    1,2,3,4,5,6
 ), backup as (
   select
+    portfolio.asset_type,
+    portfolio.location,
+    portfolio.capitalization,
+    portfolio.investment_style,
     portfolio.description,
     equities.ticker,
     sum((quantity * cost_per_share))                 cost_basis,
@@ -131,12 +154,18 @@ with now_ts as (
               and date = (select beginning_of_year from beginning_of_year) then 1 else 0 end)
        = 1 -- VMMXX not available via TIINGO api
   group by
-    1,2
+    1,2,3,4,5,6
 ), detail as (
   select
-    coalesce(today.description, yesterday.description) description,
-    coalesce(today.ticker, yesterday.ticker) ticker,
-    today.cost_basis, today.market_value, today.gain_loss,
+    coalesce(today.asset_type,       yesterday.asset_type) asset_type,
+    coalesce(today.location,         yesterday.location) as location,
+    coalesce(today.capitalization,   yesterday.capitalization) capitalization,
+    coalesce(today.investment_style, yesterday.investment_style) investment_style,
+    coalesce(today.description,      yesterday.description) description,
+    coalesce(today.ticker,           yesterday.ticker) ticker,
+    today.cost_basis,
+    today.market_value,
+    today.gain_loss,
     today.market_value - ytd.market_value ytd_gain_loss,
     today.market_value - yesterday.yesterday today_gain_loss
   from
@@ -146,12 +175,16 @@ with now_ts as (
   order by today.market_value desc
 ), detail_with_backup as (
   select
-    coalesce(detail.description,    backup.description) description,
-    coalesce(detail.ticker,         backup.ticker) ticker,
-    coalesce(detail.cost_basis,     backup.cost_basis) cost_basis,
-    coalesce(detail.market_value,   backup.market_value) market_value,
-    coalesce(detail.gain_loss,      backup.gain_loss) gain_loss,
-    coalesce(detail.ytd_gain_loss,  backup.market_value - ytd.market_value, 0) ytd_gain_loss,
+    coalesce(detail.asset_type,       backup.asset_type) asset_type,
+    coalesce(detail.location,         backup.location) as location,
+    coalesce(detail.capitalization,   backup.capitalization) capitalization,
+    coalesce(detail.investment_style, backup.investment_style) investment_style,
+    coalesce(detail.description,      backup.description) description,
+    coalesce(detail.ticker,           backup.ticker) ticker,
+    coalesce(detail.cost_basis,       backup.cost_basis) cost_basis,
+    coalesce(detail.market_value,     backup.market_value) market_value,
+    coalesce(detail.gain_loss,        backup.gain_loss) gain_loss,
+    coalesce(detail.ytd_gain_loss, backup.market_value - ytd.market_value, 0) ytd_gain_loss,
     coalesce(detail.today_gain_loss, 0) today_gain_loss
   from
     detail
@@ -159,8 +192,12 @@ with now_ts as (
     full outer join ytd on backup.description = ytd.description
 ), summary as (
   select
-    'Portfolio Total'       description,
     'TOTAL'                 ticker,
+    'Portfolio Total'       description,
+    -- 'TOTAL'              asset_type,
+    -- 'TOTAL'              as location,
+    -- 'TOTAL'              capitalization,
+    -- 'TOTAL'              investment_style,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
     sum(gain_loss)          gain_loss,
@@ -168,15 +205,58 @@ with now_ts as (
     sum(today_gain_loss)    today_gain_loss
   from
     detail_with_backup
+), benchmark as (
+  select
+    'Benchmark'             ticker,
+    'Benchmark'             description,
+    -- '----'               asset_type,
+    -- '----'               as location,
+    -- '----'               capitalization,
+    -- '----'               investment_style,
+    sum(cost_basis)         cost_basis,
+    sum(market_value)       market_value,
+    sum(gain_loss)          gain_loss,
+    sum(ytd_gain_loss)      ytd_gain_loss,
+    sum(today_gain_loss)    today_gain_loss
+  from
+    detail_with_backup
+  where ticker = 'VTSAX'
+  group by
+    1,2
+), results as (
+  select
+    ticker,
+    description,
+    -- asset_type,
+    -- location,
+    -- capitalization,
+    -- investment_style,
+    sum(cost_basis)         cost_basis,
+    sum(market_value)       market_value,
+    sum(gain_loss)          gain_loss,
+    sum(ytd_gain_loss)      ytd_gain_loss,
+    sum(today_gain_loss)    today_gain_loss
+  from
+    detail_with_backup
+  where ticker <> ''
+  group by
+    1,2
+  order by market_value desc
 ), _union as (
+  -- select * from benchmark
+  -- union all
   select * from summary
   union all
-  select * from detail_with_backup where ticker <> ''
-), report as (
+  select * from results
+), report_pre as (
   select
     ticker,
     cast(cast((market_value / ( select market_value from summary ) * 100) as decimal(8,2)) as varchar) || '%' "mix_%",
     description,
+    -- asset_type,
+    -- location,
+    -- capitalization,
+    -- investment_style,
     cast(cost_basis as integer) cost_basis,
     cast(market_value as integer) market_value,
     cast(today_gain_loss as integer) today_gain_loss,
@@ -187,5 +267,23 @@ with now_ts as (
     cast(cast((gain_loss / cost_basis * 100) as decimal(8,2)) as varchar)         || '%'  "total_gain_loss_%"
   from
     _union
+-- ), report as (
+  -- select
+    -- -- ticker,
+    -- -- description,
+    -- -- asset_type,
+    -- -- location,
+    -- -- capitalization,
+    -- -- investment_style,
+    -- case when asset_type = 'Benchmark' then '---' else "mix_%"::text end,
+    -- case when asset_type = 'Benchmark' then '---' else cost_basis::text end,
+    -- case when asset_type = 'Benchmark' then '---' else market_value::text end,
+    -- case when asset_type = 'Benchmark' then '---' else today_gain_loss::text end,
+    -- "today_gain_loss_%",
+    -- case when asset_type = 'Benchmark' then '---' else ytd_gain_loss::text end,
+    -- "ytd_gain_loss_%",
+    -- case when asset_type = 'Benchmark' then '---' else total_gain_loss::text end,
+    -- case when asset_type = 'Benchmark' then '---' else "total_gain_loss_%" end
+  -- from report_pre
 )
-select * from report order by market_value desc
+select * from report_pre

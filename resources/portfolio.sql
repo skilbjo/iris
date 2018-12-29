@@ -1,5 +1,9 @@
-with now as (
-  select (now() at time zone 'pst')::date now
+with now_ts as (
+  select current_timestamp at time zone 'America/Los_Angeles' as now_ts -- for a specifc date: select cast('2018-03-13' as timestamp) as now_ts
+), now as (
+  select cast((select now_ts from now_ts) as date) as now
+), _user as (
+  select 'skilbjo'::text as _user
 ), datasource as (
   select 'ALPHA-VANTAGE'::text as datasource
 ), date as (
@@ -24,8 +28,7 @@ with now as (
     having count(*) > 33
    ) src
 ), beginning_of_year as (
-  select date_trunc('year', ( select now from now)) + interval '1 day' beginning_of_year
-    --  select '2018-01-02' beginning_of_year
+  select date_trunc('year', ( select now from now)) + interval '1 day' beginning_of_year --  select '2018-01-02' beginning_of_year
 ), fx as (
   select
     currency, rate
@@ -77,6 +80,7 @@ with now as (
                                and markets.dataset = portfolio.dataset
   where
     portfolio.dataset = 'ALPHA-VANTAGE' --( select datasource from datasource )
+    and _user = ( select _user from _user )
   group by
     1,2,3,4,5,6,7,8
 ), today as (
@@ -190,12 +194,12 @@ with now as (
     full outer join ytd on backup.description = ytd.description
 ), summary as (
   select
-    'Portfolio Total'::text ticker,
+    'TOTAL'::text           ticker,
     'Portfolio Total'::text description,
-    -- 'Portfolio Total'::text asset_type,
-    -- 'Portfolio Total'::text            as location,
-    -- 'Portfolio Total'::text            capitalization,
-    -- 'Portfolio Total'::text            investment_style,
+    -- 'TOTAL'::text        asset_type,
+    -- 'TOTAL'::text        as location,
+    -- 'TOTAL'::text        capitalization,
+    -- 'TOTAL'::text        investment_style,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
     sum(gain_loss)          gain_loss,
@@ -205,10 +209,12 @@ with now as (
     detail_with_backup
 ), benchmark as (
   select
-    'Benchmark'::text       asset_type,
-    -- '----'::text            as location,
-    -- '----'::text            capitalization,
-    -- '----'::text            investment_style,
+    'Benchmark'::text       ticker,
+    'Benchmark'::text       description,
+    -- '----'::text         asset_type,
+    -- '----'::text         as location,
+    -- '----'::text         capitalization,
+    -- '----'::text         investment_style,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
     sum(gain_loss)          gain_loss,
@@ -218,7 +224,7 @@ with now as (
     detail_with_backup
   where ticker = 'VTSAX'
   group by
-    1
+    1,2
 ), results as (
   select
     ticker,
@@ -247,12 +253,12 @@ with now as (
 ), report_pre as (
   select
     ticker,
+    (market_value / ( select market_value from summary ) * 100)::decimal(8,2) || '%' "mix_%",
     description,
     -- asset_type,
     -- location,
     -- capitalization,
     -- investment_style,
-    (market_value / ( select market_value from summary ) * 100)::decimal(8,2) || '%' "mix_%",
     cost_basis::int ,
     market_value::int,
     today_gain_loss::int,
