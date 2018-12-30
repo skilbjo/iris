@@ -18,55 +18,67 @@ setup_aws(){
 }
 
 setup_email(){
-  echo set from = "${email}"                          >>/root/.muttrc \
-    && echo set realname = "Iris"                     >>/root/.muttrc \
-    && echo set imap_user = "${email}"                >>/root/.muttrc \
-    && echo set imap_pass = "${email_pw}"             >>/root/.muttrc \
-    && echo set folder = "imaps://imap.gmail.com:993" >>/root/.muttrc \
-    && echo set spoolfile = "+INBOX"                  >>/root/.muttrc \
-    && echo set postponed ="+[Gmail]/Drafts"          >>/root/.muttrc \
-    && echo set header_cache =~/.mutt/cache/headers   >>/root/.muttrc \
-    && echo set message_cachedir =~/.mutt/cache/bodies  >>/root/.muttrc \
-    && echo set certificate_file =~/.mutt/certificates  >>/root/.muttrc \
-    && echo set smtp_url = "smtps://$(echo $email | sed 's/@.*//')@smtp.gmail.com:465/"  >>/root/.muttrc \
-    && echo set smtp_pass = "${email_pw}"             >>/root/.muttrc \
-    && echo set move = no                             >>/root/.muttrc \
-    && echo set imap_keepalive = 900                  >>/root/.muttrc \
-    && echo set crypt_use_gpgme=no                    >>/root/.muttrc \
-    && chown -R postfix /var/spool/postfix/ \
-    && chown root /var/spool/postfix/ \
-    && chown root /var/spool/postfix/pid \
-    && postmap /etc/postfix/generic
+  if [[ $(whoami) == 'root' ]]; then
+    echo set from = "${email}"                          >>/root/.muttrc \
+      && echo set realname = "Iris"                     >>/root/.muttrc \
+      && echo set imap_user = "${email}"                >>/root/.muttrc \
+      && echo set imap_pass = "${email_pw}"             >>/root/.muttrc \
+      && echo set folder = "imaps://imap.gmail.com:993" >>/root/.muttrc \
+      && echo set spoolfile = "+INBOX"                  >>/root/.muttrc \
+      && echo set postponed ="+[Gmail]/Drafts"          >>/root/.muttrc \
+      && echo set header_cache =~/.mutt/cache/headers   >>/root/.muttrc \
+      && echo set message_cachedir =~/.mutt/cache/bodies  >>/root/.muttrc \
+      && echo set certificate_file =~/.mutt/certificates  >>/root/.muttrc \
+      && echo set smtp_url = "smtps://$(echo $email | sed 's/@.*//')@smtp.gmail.com:465/"  >>/root/.muttrc \
+      && echo set smtp_pass = "${email_pw}"             >>/root/.muttrc \
+      && echo set move = no                             >>/root/.muttrc \
+      && echo set imap_keepalive = 900                  >>/root/.muttrc \
+      && echo set crypt_use_gpgme=no                    >>/root/.muttrc \
+      && chown -R postfix /var/spool/postfix/ \
+      && chown root /var/spool/postfix/ \
+      && chown root /var/spool/postfix/pid \
+      && postmap /etc/postfix/generic
 
-  set +e
-  postfix start || echo 'Postfix already running'
-  set -e
-  sleep 3
+    set +e
+    postfix start || echo 'Postfix already running'
+    set -e
+    sleep 3
+  fi
 }
 
 email_aws(){
   local report="$1"
-  local subject="Iris report for ${report} on $(date -I)"
-  local body="Iris report for $(date -I): $(cat "/out/${report}" | sed 's/\"//g' | tr -d "\n\r")"
-  local attachment="$(base64 -w 0 /out/${report}.csv)"
+  local distro_list="$2"
+  local subject="Iris report for ${report} on $(date +%F)"
+  local body="Iris report for $(date +%F): $(cat "/tmp/${report}" | sed 's/\"//g' | tr -d "\n\r")"
+  local attachment="$(base64 -w 0 /tmp/${report}_athena.csv)"
 
-  echo "{\"Data\": \"From: ${email}\\nTo: ${email}\\nSubject: ${subject}\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\\\"NextPart\\\"\\n\\n--NextPart\\nContent-Type: text/html;\\n\\n${body}\\n\\n--NextPart\\nContent-Type: text/csv;\\nContent-Disposition: attachment; filename=\\\"${report}.csv\\\"\\nContent-Transfer-Encoding: base64\\n\\n${attachment}\\n\\n--NextPart--\"}" >"/out/${report}.json"
+  echo "{\"Data\": \"From: ${email}\\nTo: ${distro_list}\\nSubject: ${subject}\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\\\"NextPart\\\"\\n\\n--NextPart\\nContent-Type: text/html;\\n\\n${body}\\n\\n--NextPart\\nContent-Type: text/csv;\\nContent-Disposition: attachment; filename=\\\"${report}.csv\\\"\\nContent-Transfer-Encoding: base64\\n\\n${attachment}\\n\\n--NextPart--\"}" >"/tmp/${report}.json"
 
-  aws ses \
-    send-raw-email \
-    --region us-east-1 \
-    --raw-message "fileb:///out/${report}.json"
+  if [[ $(whoami) == 'root' ]]; then
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "fileb:///tmp/${report}.json"
+  else
+    aws ses \
+      send-raw-email \
+      --profile circleci \
+      --region us-east-1 \
+      --raw-message "fileb:///tmp/${report}.json"
+  fi
 }
 
 email() {
   local report="$1"
+  local distro_list="$2"
 
-  echo "Iris report for $(date -I): $(cat "/out/${report}")" | \
+  echo "Iris report for $(date +%F): $(cat "/tmp/${report}")" | \
     mutt -e 'set content_type=text/html' \
-      -s "Iris report for $report on $(date -I)" \
-      -a "/out/${report}.csv" \
-      -- $email
-  sleep 5
+      -s "Iris report for $report on $(date +%F)" \
+      -a "/tmp/${report}.csv" \
+      -- "$distro_list"
+  sleep 3
 }
 
 csv_to_html(){
@@ -74,7 +86,7 @@ csv_to_html(){
 
   echo '<table border="2" cellspacing="1" cellpadding="2">'         >"/tmp/${report}"
   local header='true'
-  cat "/out/${report}.csv" | while read line; do
+  cat "/tmp/${report}.csv" | while read line; do
     if [[ $header == 'true' ]]; then
       echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"/tmp/${report}";
       header='false';

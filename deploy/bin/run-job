@@ -1,22 +1,37 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-src_dir="usr/local/src"
-deploy_dir="/usr/local/deploy/bin"
-cmd="${src_dir}/iris"
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+src_dir="${dir}/../../src"
+set +u; _job="$1"; set -u
+cmd=''
 
-# Prereqs
-case $(uname -a) in
-  *arm* )
-    set +e; eval "${deploy_dir}/apk-arm"; update-ca-certificates; apk fix || echo 'Unable to reach apk...'; set -e; ;; # set +e when apk not available
+prereqs(){
+  if [[ $(whoami) == 'root' ]]; then
+    case $(uname -a) in
+      *arm* )
+        set +e; eval "${dir}/apk-arm"; update-ca-certificates; apk fix || echo 'Unable to reach apk...'; set -e; ;; # set +e when apk not available
+    esac
+
+    case $(cat /etc/os-release | grep -i '^name=' | sed 's/NAME=//' | sed 's/^"\(.*\)"$/\1/') in
+      'Alpine Linux' )
+        update-ca-certificates; apk fix || echo 'Unable to reach apk...' ;; # Any quirks with Alpine can go here
+      'Debian GNU/Linux' )
+        echo '' ;; # Any quirks with Debian can go here
+    esac
+  fi
+}
+
+case "$_job" in
+  daily )
+    cmd="${src_dir}/run-it daily" ;;
+  weekly )
+    cmd="${src_dir}/run-it weekly" ;;
+  * )
+    cmd="${src_dir}/run-it daily" ;;
+  #* )  # uncomment after testing lambda
+    #echo 'No args provided' && exit 1 ;;
 esac
 
-case $(cat /etc/os-release | grep -i '^name=' | sed 's/NAME=//' | sed 's/^"\(.*\)"$/\1/') in
-  'Alpine Linux' )
-    update-ca-certificates; apk fix || echo 'Unable to reach apk...' ;; # Any quirks with Alpine can go here
-  'Debian GNU/Linux' )
-    echo '' ;; # Any quirks with Debian can go here
-esac
-set -e
-
-exec $cmd $@
+prereqs && \
+  eval "$cmd"

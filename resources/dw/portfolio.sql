@@ -3,7 +3,7 @@ with now_ts as (
 ), now as (
   select cast((select now_ts from now_ts) as date) as now
 ), _user as (
-  select 'skilbjo'::text as _user
+  select ':user'::text as _user
 ), datasource as (
   select 'ALPHA-VANTAGE'::text as datasource
 ), date as (

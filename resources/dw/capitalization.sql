@@ -3,16 +3,16 @@ with now_ts as (
 ), now as (
   select cast((select now_ts from now_ts) as date) as now
 ), _user as (
-  select 'skilbjo' as _user
+  select ':user'::text as _user
 ), datasource as (
-  select 'ALPHA-VANTAGE' as datasource
+  select 'ALPHA-VANTAGE'::text as datasource
 ), date as (
   select
     (select now from now) today,
-    case day_of_week((select now_ts from now_ts)) % 7
-      when 1 then (select now from now) - interval '3' day
-      when 0 then (select now from now) - interval '2' day
-      else        (select now from now) - interval '1' day
+    case (extract(isodow from (select now from now))::integer) % 7
+      when 1 then (select now from now) - 3
+      when 0 then (select now from now) - 2
+      else        (select now from now) - 1
     end as yesterday
 ), max_known_date as (
   select
@@ -20,47 +20,48 @@ with now_ts as (
   from (
     select date, dataset, count(*)
     from dw.equities_fact
-    where dataset <> 'ALPHA-VANTAGE'
-      and ticker in ( select distinct ticker from dw.portfolio_dim where dataset = ( select datasource from datasource ) )
-      and s3uploaddate <> (select now from now)
+    where
+      ticker in ( select distinct ticker from dw.portfolio_dim where dataset = ( select datasource from datasource ) )
+      and date <> ( select now from now )
     group by
       1,2
-    having count(*) > 30
+    having count(*) > 33
    ) src
 ), beginning_of_year as (
-  select date_trunc('year', ( select now from now)) + interval '1' day beginning_of_year
+  select date_trunc('year', ( select now from now)) + interval '1 day' beginning_of_year --  select '2018-01-02' beginning_of_year
 ), fx as (
   select
-    currency, cast(rate as decimal(24,14)) rate
+    currency, rate
   from
     dw.currency_fact
   where
     currency = 'GBP'
-    and ( s3uploaddate = cast((select today from date ) as date)
-    or    s3uploaddate = cast((select yesterday from date ) as date ))
+    and ( date = ( select today from date )
+    or    date = ( select yesterday from date ) )
   order by date desc
   limit 1
 ), fx_backup as (
   select
-    'GBP' currency, 1.30 rate
+    'GBP'::text currency, 1.30 rate
 ), fx_with_backup as (
   select
     coalesce(fx.currency,fx_backup.currency) currency,
-    coalesce(fx.rate    ,fx_backup.rate)     rate
+    coalesce(fx.rate    ,fx_backup.rate) rate
   from fx
     right join fx_backup on fx.currency = fx_backup.currency
 ), equities as (
   select
     ticker,
-    cast(date as date)                     as date,
-    avg(case when ticker = 'LON:FCH' then try_cast(close as decimal(10,2)) * (select rate from fx_with_backup where currency = 'GBP') / 100 else try_cast(close as decimal(10,2)) end) as close
+    date,
+    avg(case when ticker = 'LON:FCH' then close * (select rate from fx_with_backup where currency = 'GBP') / 100 else close end) as close
   from
-    dw.equities_fact equities
+    dw.equities_fact
   where
-    s3uploaddate    = cast((select today from date) as date)
-    or s3uploaddate = cast((select yesterday from date) as date)
-    or s3uploaddate = cast((select max_known_date from max_known_date) as date)
-    or s3uploaddate = cast((select beginning_of_year from beginning_of_year) as date)
+    date    = ( select today from date )
+    or date = ( select yesterday from date )
+    or date = ( select max_known_date from max_known_date )
+    or date = ( select beginning_of_year from beginning_of_year )
+    or date is null
   group by
     1,2
 ), portfolio as (
@@ -71,14 +72,15 @@ with now_ts as (
     markets.investment_style,
     markets.description,
     portfolio.ticker,
-    cast(portfolio.quantity as decimal(10,4))      as quantity,
-    cast(portfolio.cost_per_share as decimal(6,2)) as cost_per_share
+    portfolio.quantity,
+    portfolio.cost_per_share
   from
     dw.portfolio_dim portfolio
     join dw.markets_dim markets on markets.ticker = portfolio.ticker
+                               and markets.dataset = portfolio.dataset
   where
     portfolio.dataset = 'ALPHA-VANTAGE' --( select datasource from datasource )
-    and user = ( select _user from _user )
+    and _user = ( select _user from _user )
   group by
     1,2,3,4,5,6,7,8
 ), today as (
@@ -113,9 +115,9 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) yesterday
   from
     equities
-    right join portfolio on portfolio.ticker = equities.ticker
+    right join portfolio on equities.ticker = portfolio.ticker
   where
-    date in ( select yesterday from date ) or date is null
+    date in ( select yesterday from date )
   group by
     1,2,3,4,5,6
 ), ytd as (
@@ -129,7 +131,7 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) market_value
   from
     equities
-    right join portfolio on portfolio.ticker = equities.ticker
+    right join portfolio on equities.ticker = portfolio.ticker
   where
     date = ( select beginning_of_year from beginning_of_year )
   group by
@@ -147,7 +149,7 @@ with now_ts as (
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     equities
-    right join portfolio on portfolio.ticker = equities.ticker
+    right join portfolio on equities.ticker = portfolio.ticker
   where
     date in ( select max_known_date from max_known_date )
     or (case when equities.ticker in ('VMMXX')
@@ -192,12 +194,12 @@ with now_ts as (
     full outer join ytd on backup.description = ytd.description
 ), summary as (
   select
-    'TOTAL'                 ticker,
-    'Portfolio Total'       description,
-    -- 'TOTAL'              asset_type,
-    -- 'TOTAL'              as location,
-    -- 'TOTAL'              capitalization,
-    -- 'TOTAL'              investment_style,
+    -- 'TOTAL'::text           ticker,
+    -- 'Portfolio Total'::text description,
+    'TOTAL'::text           asset_type,
+    -- 'TOTAL'::text        as location,
+    -- 'TOTAL'::text        capitalization,
+    -- 'TOTAL'::text        investment_style,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
     sum(gain_loss)          gain_loss,
@@ -207,12 +209,12 @@ with now_ts as (
     detail_with_backup
 ), benchmark as (
   select
-    'Benchmark'             ticker,
-    'Benchmark'             description,
-    -- '----'               asset_type,
-    -- '----'               as location,
-    -- '----'               capitalization,
-    -- '----'               investment_style,
+    -- 'Benchmark'::text    ticker,
+    -- 'Benchmark'::text    description,
+    'Benchmark'::text       asset_type,
+    -- '----'::text         as location,
+    -- '----'::text         capitalization,
+    -- '----'::text         investment_style,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
     sum(gain_loss)          gain_loss,
@@ -222,14 +224,14 @@ with now_ts as (
     detail_with_backup
   where ticker = 'VTSAX'
   group by
-    1,2
+    1--,2
 ), results as (
   select
-    ticker,
-    description,
+    -- ticker,
+    -- description,
     -- asset_type,
     -- location,
-    -- capitalization,
+    capitalization,
     -- investment_style,
     sum(cost_basis)         cost_basis,
     sum(market_value)       market_value,
@@ -240,50 +242,50 @@ with now_ts as (
     detail_with_backup
   where ticker <> ''
   group by
-    1,2
+    1--,2
   order by market_value desc
 ), _union as (
-  -- select * from benchmark
-  -- union all
+  select * from benchmark
+  union all
   select * from summary
   union all
   select * from results
 ), report_pre as (
   select
-    ticker,
-    cast(cast((market_value / ( select market_value from summary ) * 100) as decimal(8,2)) as varchar) || '%' "mix_%",
-    description,
-    -- asset_type,
+    -- ticker,
+    (market_value / ( select market_value from summary ) * 100)::decimal(8,2) || '%' "mix_%",
+    -- description,
+    asset_type,
     -- location,
     -- capitalization,
     -- investment_style,
-    cast(cost_basis as integer) cost_basis,
-    cast(market_value as integer) market_value,
-    cast(today_gain_loss as integer) today_gain_loss,
-    cast(cast((today_gain_loss / market_value * 100) as decimal(8,2)) as varchar) || '%'  "today_gain_loss_%",
-    cast(ytd_gain_loss as integer) ytd_gain_loss,
-    cast(cast((ytd_gain_loss / market_value * 100) as decimal(8,2)) as varchar)   || '%'  "ytd_gain_loss_%",
-    cast(gain_loss as integer) total_gain_loss,
-    cast(cast((gain_loss / cost_basis * 100) as decimal(8,2)) as varchar)         || '%'  "total_gain_loss_%"
+    cost_basis::int ,
+    market_value::int,
+    today_gain_loss::int,
+    (today_gain_loss / market_value * 100)::decimal(8,2) || '%'  "today_gain_loss_%",
+    ytd_gain_loss::int,
+    (ytd_gain_loss / market_value * 100)::decimal(8,2)   || '%'  "ytd_gain_loss_%",
+    gain_loss::int total_gain_loss,
+    (gain_loss / cost_basis * 100)::decimal(8,2)         || '%'  "total_gain_loss_%"
   from
     _union
--- ), report as (
-  -- select
-    -- -- ticker,
-    -- -- description,
-    -- -- asset_type,
-    -- -- location,
-    -- -- capitalization,
-    -- -- investment_style,
-    -- case when asset_type = 'Benchmark' then '---' else "mix_%"::text end,
-    -- case when asset_type = 'Benchmark' then '---' else cost_basis::text end,
-    -- case when asset_type = 'Benchmark' then '---' else market_value::text end,
-    -- case when asset_type = 'Benchmark' then '---' else today_gain_loss::text end,
-    -- "today_gain_loss_%",
-    -- case when asset_type = 'Benchmark' then '---' else ytd_gain_loss::text end,
-    -- "ytd_gain_loss_%",
-    -- case when asset_type = 'Benchmark' then '---' else total_gain_loss::text end,
-    -- case when asset_type = 'Benchmark' then '---' else "total_gain_loss_%" end
-  -- from report_pre
+), report as (
+  select
+    -- ticker,
+    -- description,
+    case when asset_type = 'Benchmark' then '---' else "mix_%"::text end,
+    asset_type,
+    -- location,
+    -- capitalization,
+    -- investment_style,
+    case when asset_type = 'Benchmark' then '---' else cost_basis::text end,
+    case when asset_type = 'Benchmark' then '---' else market_value::text end,
+    case when asset_type = 'Benchmark' then '---' else today_gain_loss::text end,
+    "today_gain_loss_%",
+    case when asset_type = 'Benchmark' then '---' else ytd_gain_loss::text end,
+    "ytd_gain_loss_%",
+    case when asset_type = 'Benchmark' then '---' else total_gain_loss::text end,
+    case when asset_type = 'Benchmark' then '---' else "total_gain_loss_%" end
+  from report_pre
 )
-select * from report_pre
+select * from report

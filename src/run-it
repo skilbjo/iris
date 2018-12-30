@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+resources_dir="${dir}/../resources/"
+set +u; task="$1"; set -u
+
+setup(){
+  local src_dir="${dir}"
+
+  source "${dir}/util"
+  source "${dir}/athena"
+
+  export email="${_email}"
+
+  if [[ $(whoami) == 'root' ]]; then
+    source "${src_dir}/athena"
+    setup_aws
+  else
+    source "${src_dir}/athena.user"
+  fi
+
+  mkdir -p /tmp/dw && mkdir -p /tmp/athena
+}
+
+_report(){
+  local report="$1"
+  local user="$2"
+  local distro_list="$3"
+
+  local sql="$(cat "${resources_dir}/dw/${report}.sql" | \
+    sed "s/:user/${user}/" \
+    >"${resources_dir}/dw/${report}-with-sed.sql" && \
+    echo "${resources_dir}/dw/${report}-with-sed.sql")"
+
+  # html
+  psql "$db_uri" \
+    --html \
+    -f "$sql" \
+    >"/tmp/${report}"
+
+  # csv
+  psql "$db_uri" \
+    -AF',' \
+    -f "$sql" \
+    >"/tmp/${report}.csv"
+
+  email "$report" "$distro_list"
+}
+
+_report_athena(){
+  local report="$1"
+  local user="$2"
+  local distro_list="$3"
+
+  local sql="$(cat "${resources_dir}/athena/${report}_athena.sql" | \
+    sed "s/:user/${user}/")"
+
+  # csv
+  query "$sql" >"/tmp/${report}_athena.csv"
+
+  # html
+  csv_to_html "${report}_athena" >"/tmp/${report}"
+
+  email_aws "$report" "$distro_list"
+}
+
+daily(){
+  set +u;
+    if [[ ! -z $db_uri ]]; then
+      setup_email
+
+      _report portfolio 'skilbjo' "$email" && \
+        ping_healthchecks "$healthchecks_io_iris";
+    else
+      _report_athena portfolio 'skilbjo' "$email"
+    fi;
+  set -u
+}
+
+weekly(){
+  set +u;
+    if [[ ! -z $db_uri ]]; then
+      setup_email
+
+      _report asset_type 'skilbjo' "$email" && \
+        _report location 'skilbjo' "$email" && \
+        _report capitalization 'skilbjo' "$email" && \
+        _report investment_style 'skilbjo' "$email"
+    else
+      _report_athena portfolio "$email"
+    fi;
+  set -u
+}
+
+setup
+
+case "$task" in
+  daily )
+    daily ;;
+  weekly )
+    weekly ;;
+  * )
+    echo 'in src/run-it, no args provided' && exit 1 ;;
+esac
