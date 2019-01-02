@@ -15,7 +15,7 @@
 #05 19 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; $cmd >/dev/null 2>&1
 
 ### when everything is delayed
-15 21 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd daily" >/dev/null 2>&1
+15 21 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd" daily >/dev/null 2>&1
 
 ### - weekly --------------------------------------
-15 21 * * 5   skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd weekly" >/dev/null 2>&1
+15 21 * * 5   skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd" weekly >/dev/null 2>&1
