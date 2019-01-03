@@ -15,7 +15,6 @@ setup(){
 
   if [[ $(whoami) == 'root' ]]; then
     source "${src_dir}/athena"
-    setup_aws
   elif [[ $(whoami) == 'sbx_'* ]]; then
     source "${src_dir}/athena"
     setup_aws
