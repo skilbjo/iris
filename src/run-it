@@ -13,6 +13,8 @@ setup(){
 
   export email="${_email}"
 
+  >&2 echo "user is: $(whoami)"
+
   if [[ $(whoami) == 'root' ]]; then
     source "${src_dir}/athena"
   elif [[ $(whoami) == 'sbx_'* ]]; then
@@ -21,9 +23,8 @@ setup(){
   elif [[ $(whoami) == 'skilbjo' ]]; then
     source "${src_dir}/athena.user"
   else
-    echo "user is: $(whoami) , sourcing root athena file..."
     source "${src_dir}/athena"
-    setup_aws
+    #setup_aws
   fi
 
   mkdir -p /tmp/dw && mkdir -p /tmp/athena
