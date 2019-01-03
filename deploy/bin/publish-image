@@ -25,7 +25,7 @@ publish(){
     cat "${dir}/deploy/default/${tag}.Dockerfile" >Dockerfile
 
     if [[ $CIRCLE_BRANCH == master ]]; then
-      tag="${tag}-latest"
+      tag="${tag}"
     else
       tag="${tag}-${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"
     fi
