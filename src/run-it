@@ -13,7 +13,7 @@ setup(){
 
   export email="${_email}"
 
-  if [[ $(whoami) == 'root' ]]; then
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
     source "${src_dir}/athena"
     setup_aws
   else
