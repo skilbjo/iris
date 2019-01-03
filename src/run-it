@@ -17,11 +17,14 @@ setup(){
     source "${src_dir}/athena"
     setup_aws
   elif [[ $(whoami) == 'sbx_'* ]]; then
-    echo "user is: $(whoami)"
     source "${src_dir}/athena"
     setup_aws
-  else
+  elif [[ $(whoami) == 'skilbjo' ]]; then
     source "${src_dir}/athena.user"
+  else
+    echo "user is: $(whoami) , sourcing root athena file..."
+    source "${src_dir}/athena"
+    setup_aws
   fi
 
   mkdir -p /tmp/dw && mkdir -p /tmp/athena
