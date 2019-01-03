@@ -21,6 +21,19 @@ run_container(){
     "${app}:${tag}" bash
 }
 
+run_minicon(){
+  local tag="debian-minicon"
+
+  docker run -it --rm \
+    --name="$(echo $app)" \
+    -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
+    -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
+    -e _email="$(echo $email)" \
+    -e email_pw="$(echo $email_pw)" \
+    -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
+    "quay.io/skilbjo/iris:${tag}" bash
+}
+
 run_minidock(){
   local tag='debian-minicon-dev'
 
@@ -46,6 +59,7 @@ run_minidock(){
 
 run_container 'dev'
 run_container 'debian-dev'
+run_minicon 'debian-minicon'
 
 # this can only be run on a Linux machine
 #run_container 'arm-dev'
