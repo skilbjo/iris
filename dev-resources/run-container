@@ -13,6 +13,7 @@ run_container(){
 
   docker run -it --rm \
     --name="$(echo $app)" \
+    -e db_uri="$(echo $db_uri)" \
     -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
     -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
     -e _email="$(echo $email)" \

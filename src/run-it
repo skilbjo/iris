@@ -9,7 +9,6 @@ setup(){
   local src_dir="${dir}"
 
   source "${dir}/util"
-  source "${dir}/athena"
 
   export email="${_email}"
 
@@ -17,7 +16,7 @@ setup(){
     source "${src_dir}/athena"
     setup_aws
   elif [[ $(whoami) == 'skilbjo' ]]; then
-    source "${src_dir}/athena.user"
+    source "/Users/skilbjo/dev/engineering/src/athena.user"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
