@@ -39,13 +39,12 @@ publish(){
 }
 
 build_minidocker_image() {
-  local tag='debian-minicon'
   if [[ $CIRCLE_BRANCH == master ]]; then
     pull_tag='debian'
     push_tag='debian-minicon'
   else
     pull_tag="debian-${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"
-    push_tag="${tag}-${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"
+    push_tag="debian-minicon-${CIRCLE_BRANCH}_${CIRCLE_BUILD_NUM}"
   fi
 
   minidock \
