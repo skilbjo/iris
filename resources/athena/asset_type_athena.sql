@@ -14,21 +14,41 @@ with now_ts as (
       when 0 then (select now from now) - interval '2' day
       else        (select now from now) - interval '1' day
     end as yesterday
+), beginning_of_year as (
+  select date_trunc('year', ( select now from now)) + interval '1' day beginning_of_year
+), portfolio as (
+  select
+    markets.asset_type,
+    markets.location,
+    markets.capitalization,
+    markets.investment_style,
+    markets.description,
+    portfolio.ticker,
+    cast(portfolio.quantity as decimal(10,4))      as quantity,
+    cast(portfolio.cost_per_share as decimal(6,2)) as cost_per_share
+  from
+    dw.portfolio_dim portfolio
+    join dw.markets_dim markets on markets.ticker = portfolio.ticker
+  where
+    portfolio.dataset = ( select datasource from datasource )
+    and user = ( select _user from _user )
+  group by
+    1,2,3,4,5,6,7,8
 ), max_known_date as (
   select
     max(cast(date as date)) max_known_date
   from (
     select date, dataset, count(*)
     from dw.equities_fact
-    where dataset <> 'ALPHA-VANTAGE'
-      and ticker in ( select distinct ticker from dw.portfolio_dim where dataset = ( select datasource from datasource ) )
-      and s3uploaddate <> (select now from now)
+    where
+      s3uploaddate >= cast((select beginning_of_year from beginning_of_year ) as date)
+      and s3uploaddate <> cast((select now from now) as date)
+      and ticker in ( select distinct ticker from portfolio )
+      and dataset <> 'ALPHA-VANTAGE'
     group by
       1,2
     having count(*) > 30
    ) src
-), beginning_of_year as (
-  select date_trunc('year', ( select now from now)) + interval '1' day beginning_of_year
 ), fx as (
   select
     currency, cast(rate as decimal(24,14)) rate
@@ -63,24 +83,6 @@ with now_ts as (
     or s3uploaddate = cast((select beginning_of_year from beginning_of_year) as date)
   group by
     1,2
-), portfolio as (
-  select
-    markets.asset_type,
-    markets.location,
-    markets.capitalization,
-    markets.investment_style,
-    markets.description,
-    portfolio.ticker,
-    cast(portfolio.quantity as decimal(10,4))      as quantity,
-    cast(portfolio.cost_per_share as decimal(6,2)) as cost_per_share
-  from
-    dw.portfolio_dim portfolio
-    join dw.markets_dim markets on markets.ticker = portfolio.ticker
-  where
-    portfolio.dataset = 'ALPHA-VANTAGE'
-    and user = ( select _user from _user )
-  group by
-    1,2,3,4,5,6,7,8
 ), today as (
   select
     portfolio.asset_type,
@@ -278,7 +280,7 @@ with now_ts as (
     case when asset_type = 'Benchmark' then '---' else cast(ytd_gain_loss as varchar) end ytd_gain_loss,
     "ytd_gain_loss_%",
     case when asset_type = 'Benchmark' then '---' else cast(total_gain_loss as varchar) end total_gain_loss,
-    case when asset_type = 'Benchmark' then '---' else cast("total_gain_loss_%" as varchar) end "total_gain_loss_%"
+    cast("total_gain_loss_%" as varchar) "total_gain_loss_%"
   from report_pre
 )
 select * from report
