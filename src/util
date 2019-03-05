@@ -51,7 +51,7 @@ email_aws(){
   local report="$1"
   local distro_list="$2"
   local subject="Iris report for ${report} on $(date +%F)"
-  local body="Iris report for $(date +%F): $(cat "/tmp/${report}" | sed 's/\"//g' | tr -d "\n\r")"
+  local body="Iris report for $(date +%F): $(cat "/tmp/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
 
   if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
     local attachment="$(base64 -w 0 /tmp/${report}.csv)"
