@@ -50,7 +50,7 @@ build_minidocker_image() {
   minidock \
     -i "${image}:${pull_tag}" -t "${image}:${push_tag}" --apt \
     --include '/usr/local/resources/*' \
-    --include '/usr/local/lib/python2.7/dist-packages/*' \
+    --include '/usr/local/lib/python3.5/dist-packages/*' \
     --include '/usr/lib/python2.7/*' \
     --include '/usr/lib/python3.5/*' \
     -E bash -E aws -E jq -E cat -E mkdir -E date -E touch -E sed -E tr -E base64 -E sleep -E grep -E uname -E curl \

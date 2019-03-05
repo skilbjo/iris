@@ -39,7 +39,7 @@ build_minidocker_image(){
   minidock \
     -i $image:$x86_tag -t $image:$tag --apt \
     --include '/usr/local/resources/*' \
-    --include '/usr/local/lib/python2.7/dist-packages/*' \
+    --include '/usr/local/lib/python3.5/dist-packages/*' \
     --include '/usr/lib/python2.7/*' \
     --include '/usr/lib/python3.5/*' \
     -E bash -E aws -E jq -E cat -E mkdir -E date -E touch -E sed -E tr -E base64 -E sleep -E grep -E uname -E curl \
@@ -51,9 +51,9 @@ build_minidocker_image(){
   docker push $image
 }
 
-publish && \
-  publish 'arm' && \
-  publish 'debian'
+publish
+publish 'arm'
+publish 'debian'
 
 # this can only be run on a Linux machine
 #build_minidocker_image
