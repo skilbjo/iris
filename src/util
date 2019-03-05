@@ -67,10 +67,10 @@ email_aws(){
       --raw-message "file:///tmp/${report}.json"
   elif [[ $(whoami) == 'sbx_'* ]]; then
 
-    ls -lh /tmp/report.json
+    ls -lh "/tmp/${report}.json"
 
-    head -c 100 /tmp/report.json
-    tail -c 100 /tmp/report.json
+    head -c 100 "/tmp/${report}.json"
+    tail -c 100 "/tmp/${report}.json"
 
     aws ses \
       send-raw-email \
