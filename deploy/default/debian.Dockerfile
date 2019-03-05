@@ -4,5 +4,4 @@ COPY deploy                      /usr/local/deploy
 COPY resources                   /usr/local/resources
 COPY src                         /usr/local/src
 
-RUN rm -rf /usr/local/lib/python3.5/dist-packages/awscli/examples \
-    && rm -rf /usr/local/lib/python3.5/dist-packages/docutils
+RUN rm -rf /usr/local/lib/python3.5/dist-packages/awscli/examples
