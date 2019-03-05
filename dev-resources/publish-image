@@ -24,8 +24,8 @@ publish(){
 
 # this can only be run on a Linux machine
 build_minidocker_image(){
-  local x86_tag='x86-debian_dev'
-  local image_tag='x86-debian-minicon_dev'
+  local pull_tag='debian-dev'
+  local push_tag='debian-minicon-dev'
 
   if [[ $(cat /etc/os-release | grep 'Linux') == 'Linux' ]] && [[ -f /etc/os-release ]]; then
     source "./util"
@@ -34,10 +34,10 @@ build_minidocker_image(){
     echo 'Not running in Linux. Try again inside a Debian VM.' 2>&1 && exit 1
   fi
 
-  publish 'debian'
+  # publish 'debian'  # <- make sure this has been run
 
   minidock \
-    -i $image:$x86_tag -t $image:$tag --apt \
+    -i "${image}:${pull_tag}" -t "${image}:${push_tag}" --apt \
     --include '/usr/local/resources/*' \
     --include '/usr/local/lib/python3.5/dist-packages/*' \
     --include '/usr/lib/python3.5/*' \
@@ -46,7 +46,7 @@ build_minidocker_image(){
     -- /usr/local/deploy/bin/run-job
 
   docker login -u $QUAY_ROBOT_USERNAME -p $QUAY_ROBOT_PASSWORD 'quay.io'
-  docker tag $app:$image_tag $app
+  docker tag "${app}:${push_tag}" $app
   docker push $image
 }
 

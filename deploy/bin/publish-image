@@ -48,7 +48,7 @@ build_minidocker_image() {
   fi
 
   minidock \
-    -i $image:$x86_tag -t $image:$tag --apt \
+    -i "${image}:${pull_tag}" -t "${image}:${push_tag}" --apt \
     --include '/usr/local/resources/*' \
     --include '/usr/local/lib/python3.5/dist-packages/*' \
     --include '/usr/lib/python3.5/*' \
@@ -60,9 +60,10 @@ build_minidocker_image() {
   docker push "$image"
 }
 
-setup && \
-  publish && \
-  publish 'debian' && \
-  build_minidocker_image
+setup
+
+publish
+publish 'debian'
+build_minidocker_image
 
 publish 'arm'
