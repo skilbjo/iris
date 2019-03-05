@@ -64,7 +64,7 @@ email_aws(){
     aws ses \
       send-raw-email \
       --region us-east-1 \
-      --raw-message "fileb:///tmp/${report}.json"
+      --raw-message "file:///tmp/${report}.json"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \
