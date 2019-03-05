@@ -46,7 +46,8 @@ _report(){
     -f "$sql" \
     >"/tmp/${report}.csv"
 
-  email "$report" "$distro_list"
+  #email "$report" "$distro_list"  # fix mutt on alpine. getting "No authenticators available"
+  email_aws "$report" "$distro_list"
 }
 
 _report_athena(){
@@ -58,10 +59,10 @@ _report_athena(){
     sed "s/:user/${user}/")"
 
   # csv
-  query "$sql" >"/tmp/${report}_athena.csv"
+  query "$sql" >"/tmp/${report}.csv"
 
   # html
-  csv_to_html "${report}_athena" >"/tmp/${report}"
+  csv_to_html "$report" >"/tmp/${report}"
 
   email_aws "$report" "$distro_list"
 }
