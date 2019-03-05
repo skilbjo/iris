@@ -65,12 +65,23 @@ email_aws(){
       send-raw-email \
       --region us-east-1 \
       --raw-message "file:///tmp/${report}.json"
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+
+    ls -lh /tmp/report.json
+
+    head -c 100 /tmp/report.json
+    tail -c 100 /tmp/report.json
+
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "fileb:///tmp/${report}.json"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \
       --profile personal \
       --region us-east-1 \
-      --raw-message "fileb:///tmp/${report}.json"
+      --raw-message "file:///tmp/${report}.json"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
