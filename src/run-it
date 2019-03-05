@@ -12,9 +12,14 @@ setup(){
 
   export email="${_email}"
 
-  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+  if [[ $(whoami) == 'root' ]]; then
     source "${src_dir}/athena"
     setup_aws
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    source "${src_dir}/athena"
+    setup_aws
+
+    echo "In lambda, running as user: $(whoami)"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     source "/Users/skilbjo/dev/engineering/src/athena.user"
   else
