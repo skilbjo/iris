@@ -66,18 +66,20 @@ email_aws(){
       --region us-east-1 \
       --raw-message "file:///tmp/${report}.json"
   elif [[ $(whoami) == 'sbx_'* ]]; then
-
-    aws --version
-
     ls -lh "/tmp/${report}.json"
 
-    head -c 100 "/tmp/${report}.json"
-    tail -c 100 "/tmp/${report}.json"
+    cat "/tmp/${report}.json"
+
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "file:///tmp/${report}.json"
 
     aws ses \
       send-raw-email \
       --region us-east-1 \
       --raw-message "fileb:///tmp/${report}.json"
+
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \

@@ -18,8 +18,7 @@ setup(){
   elif [[ $(whoami) == 'sbx_'* ]]; then
     source "${src_dir}/athena"
     setup_aws
-
-    echo "In lambda, running as user: $(whoami)"
+    aws --version
   elif [[ $(whoami) == 'skilbjo' ]]; then
     source "/Users/skilbjo/dev/engineering/src/athena.user"
   else
