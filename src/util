@@ -91,6 +91,54 @@ email_aws(){
   fi
 }
 
+email_aws_no_attachment(){
+  local report="$1"
+  local distro_list="$2"
+  local subject="Iris report for ${report} on $(date +%F)"
+  local body="Iris report for $(date +%F): $(cat "/tmp/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+    local attachment="$(base64 -w 0 /tmp/${report}.csv)"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    local attachment="$(gbase64 -w 0 /tmp/${report}.csv)"
+  fi
+
+  echo "{\"Data\": \"From: ${email}\\nTo: ${distro_list}\\nSubject: ${subject}\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\\\"NextPart\\\"\\n\\n--NextPart\\nContent-Type: text/html;\\n\\n${body}\\n\\n--NextPart\\n\"}" >"/tmp/${report}.json"
+
+  if [[ $(whoami) == 'root' ]]; then
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "file:///tmp/${report}.json"
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    ls -lh "/tmp/${report}.json"
+
+    cat "/tmp/${report}.json"
+
+    set +e
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "file:///tmp/${report}.json"
+    set -e
+
+    set +e
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "fileb:///tmp/${report}.json"
+    set -e
+
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    aws ses \
+      send-raw-email \
+      --profile personal \
+      --region us-east-1 \
+      --raw-message "file:///tmp/${report}.json"
+  else
+    >&2 echo "user is: $(whoami), add to setup fn"
+  fi
+}
+
 email() {
   local report="$1"
   local distro_list="$2"

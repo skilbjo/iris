@@ -72,8 +72,8 @@ _report_athena(){
 }
 
 daily(){
-  set +u;
-    if [[ ! -z $db_uri ]]; then
+  set +u; local db="$db_uri"; set -u
+    if [[ ! -z $db ]]; then
       setup_email
 
       _report portfolio 'skilbjo' "$email" && \
@@ -81,12 +81,11 @@ daily(){
     else
       _report_athena portfolio 'skilbjo' "$email"
     fi;
-  set -u
 }
 
 weekly(){
-  set +u;
-    if [[ ! -z $db_uri ]]; then
+  set +u; local db="$db_uri"; set -u
+    if [[ ! -z $db ]]; then
       setup_email
 
       _report asset_type 'skilbjo' "$email" && \
@@ -96,7 +95,12 @@ weekly(){
     else
       _report_athena portfolio "$email"
     fi;
-  set -u
+}
+
+testing(){
+  set +u; local db="$db_uri"; set -u
+
+  _report_athena portfolio 'skilbjo' "$email"
 }
 
 setup
@@ -106,6 +110,8 @@ case "$task" in
     daily ;;
   weekly )
     weekly ;;
+  testing )
+    testing ;;
   * )
     echo 'in src/run-it, no args provided' && exit 1 ;;
 esac
