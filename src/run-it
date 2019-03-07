@@ -33,21 +33,19 @@ _report(){
   local user="$2"
   local distro_list="$3"
 
-  local sql="$(cat "${resources_dir}/dw/${report}.sql" | \
-    sed "s/:user/${user}/" \
-    >"${resources_dir}/dw/${report}-with-sed.sql" && \
-    echo "${resources_dir}/dw/${report}-with-sed.sql")"
+  local sql="$(cat "${resources_dir}/dw/${report}.sql" | sed "s/:user/${user}/")"
 
   # csv
   psql "$db_uri" \
     -AF',' \
-    -f "$sql" \
+    --pset footer \
+    -c "$sql" \
     >"/tmp/${report}.csv"
 
   # html
   psql "$db_uri" \
     --html \
-    -f "$sql" \
+    -c "$sql" \
     >"/tmp/${report}.html"
 
   #email "$report" "$distro_list"  # fix mutt on alpine. getting "No authenticators available"
@@ -100,7 +98,7 @@ weekly(){
 testing(){
   set +u; local db="$db_uri"; set -u
 
-  _report_athena portfolio 'skilbjo' "$email"
+  _report portfolio 'skilbjo' "$email"
 }
 
 setup
