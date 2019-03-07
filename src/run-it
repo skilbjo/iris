@@ -98,7 +98,11 @@ weekly(){
 testing(){
   set +u; local db="$db_uri"; set -u
 
-  _report portfolio 'skilbjo' "$email"
+  if [[ ! -z $db ]]; then
+    _report        portfolio 'skilbjo' "$email"
+  else
+    _report_athena portfolio "$email"
+  fi
 }
 
 setup
