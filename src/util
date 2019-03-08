@@ -85,10 +85,6 @@ email_aws(){
     set +e
     ls -lh $(which base64)
 
-    which coreutils
-
-    ls -lh $(which coreutils)
-
     cat "/tmp/${report}.json"
 
     aws ses \
