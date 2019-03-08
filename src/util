@@ -83,8 +83,6 @@ email_aws(){
     ls -lh "/tmp/${report}.json"
 
     set +e
-    ls -lh $(which base64)
-
     cat "/tmp/${report}.json"
 
     aws ses \

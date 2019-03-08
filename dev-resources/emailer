@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+email='some.one@email.com'
+distro_list='some.else@email.com'
+subject='test'
+body="$(cat ./test-file.csv)"
+
+    echo "From: ${email}
+To: ${distro_list}
+Subject: ${subject}
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed; boundary=\"NextPart\"
+
+--NextPart
+Content-Type: text/html;
+
+${body}
+
+--NextPart
+Content-Type: text/csv;
+Content-Disposition: attachment; filename=\"${report}.csv\"
+Content-Transfer-Encoding: base64
+
+${attachment}
+
+--NextPart--"
