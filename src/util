@@ -2,16 +2,24 @@
 set -eou pipefail
 
 setup_aws(){
-  mkdir -p /root/.aws
+  if [[ $(whoami) == 'root' ]]; then
+    local home_dir='/root'
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    local home_dir="/home/$(whoami)"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    echo 'Easy, big guy...' && exit 1
+  fi
 
-  touch /root/.aws/config
-  echo "[default]"           >/root/.aws/config
-  echo "region = us-east-1" >>/root/.aws/config
+  mkdir -p "${home_dir}/.aws"
 
-  touch /root/.aws/credentials
-  echo "[default]"                                       >/root/.aws/credentials
-  echo "aws_access_key_id     = $aws_access_key_id"     >>/root/.aws/credentials
-  echo "aws_secret_access_key = $aws_secret_access_key" >>/root/.aws/credentials
+  touch "${home_dir}/.aws/config"
+  echo "[default]"           >"${home_dir}/.aws/config"
+  echo "region = us-east-1" >>"${home_dir}/.aws/config"
+
+  touch "${home_dir}/.aws/credentials"
+  echo "[default]"                                       >"${home_dir}/.aws/credentials"
+  echo "aws_access_key_id     = $aws_access_key_id"     >>"${home_dir}/.aws/credentials"
+  echo "aws_secret_access_key = $aws_secret_access_key" >>"${home_dir}/.aws/credentials"
 
   export AWS_ACCESS_KEY_ID="$aws_access_key_id"
   export AWS_SECRET_ACCESS_KEY="$aws_secret_access_key"
@@ -19,32 +27,38 @@ setup_aws(){
 
 setup_email(){
   if [[ $(whoami) == 'root' ]]; then
-    echo set from = "${email}"                          >>/root/.muttrc \
-      && echo set realname = "Iris"                     >>/root/.muttrc \
-      && echo set imap_user = "${email}"                >>/root/.muttrc \
-      && echo set imap_pass = "${email_pw}"             >>/root/.muttrc \
-      && echo set folder = "imaps://imap.gmail.com:993" >>/root/.muttrc \
-      && echo set spoolfile = "+INBOX"                  >>/root/.muttrc \
-      && echo set postponed ="+[Gmail]/Drafts"          >>/root/.muttrc \
-      && echo set header_cache =~/.mutt/cache/headers   >>/root/.muttrc \
-      && echo set message_cachedir =~/.mutt/cache/bodies  >>/root/.muttrc \
-      && echo set certificate_file =~/.mutt/certificates  >>/root/.muttrc \
-      && echo set smtp_url = "smtps://$(echo $email | sed 's/@.*//')@smtp.gmail.com:465/"  >>/root/.muttrc \
-      && echo set smtp_pass = "${email_pw}"             >>/root/.muttrc \
-      && echo set smtp_authenticators = 'gssapi:login'  >>/root/.muttrc \
-      && echo set move = no                             >>/root/.muttrc \
-      && echo set imap_keepalive = 900                  >>/root/.muttrc \
-      && echo set crypt_use_gpgme=no                    >>/root/.muttrc \
-      && chown -R postfix /var/spool/postfix/ \
-      && chown root /var/spool/postfix/ \
-      && chown root /var/spool/postfix/pid \
-      && postmap /etc/postfix/generic
-
-    set +e
-    postfix start || echo 'Postfix already running'
-    set -e
-    sleep 3
+    local home_dir='/root'
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    local home_dir="/home/$(whoami)"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    echo 'Easy, big guy...' && exit 1
   fi
+
+  echo set from = "${email}"                           >>"${home_dir}/.muttrc" \
+    && echo set realname = "Iris"                      >>"${home_dir}/.muttrc" \
+    && echo set imap_user = "${email}"                 >>"${home_dir}/.muttrc" \
+    && echo set imap_pass = "${email_pw}"              >>"${home_dir}/.muttrc" \
+    && echo set folder = "imaps://imap.gmail.com:993"  >>"${home_dir}/.muttrc" \
+    && echo set spoolfile = "+INBOX"                   >>"${home_dir}/.muttrc" \
+    && echo set postponed ="+[Gmail]/Drafts"           >>"${home_dir}/.muttrc" \
+    && echo set header_cache =~/.mutt/cache/headers    >>"${home_dir}/.muttrc" \
+    && echo set message_cachedir =~/.mutt/cache/bodies >>"${home_dir}/.muttrc" \
+    && echo set certificate_file =~/.mutt/certificates >>"${home_dir}/.muttrc" \
+    && echo set smtp_url = "smtps://$(echo $email | sed 's/@.*//')@smtp.gmail.com:465/" >>"${home_dir}/.muttrc" \
+    && echo set smtp_pass = "${email_pw}"              >>"${home_dir}/.muttrc" \
+    && echo set smtp_authenticators = 'gssapi:login'   >>"${home_dir}/.muttrc" \
+    && echo set move = no                              >>"${home_dir}/.muttrc" \
+    && echo set imap_keepalive = 900                   >>"${home_dir}/.muttrc" \
+    && echo set crypt_use_gpgme=no                     >>"${home_dir}/.muttrc" \
+    && chown -R postfix /var/spool/postfix/ \
+    && chown root /var/spool/postfix/ \
+    && chown root /var/spool/postfix/pid \
+    && postmap /etc/postfix/generic
+
+  set +e
+  postfix start || echo 'Postfix already running'
+  set -e
+  sleep 3
 }
 
 email_aws(){
@@ -68,6 +82,7 @@ email_aws(){
   elif [[ $(whoami) == 'sbx_'* ]]; then
     ls -lh "/tmp/${report}.json"
 
+    set +e
     ls -lh $(which base64)
 
     which coreutils
@@ -76,7 +91,6 @@ email_aws(){
 
     cat "/tmp/${report}.json"
 
-    set +e
     aws ses \
       send-raw-email \
       --region us-east-1 \
