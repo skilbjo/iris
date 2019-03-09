@@ -61,14 +61,16 @@ _report_athena(){
     sed "s/:user/${user}/")"
 
   # csv
-  query "$sql" >"${tmp_dir}/${report}.csv"
+  #query "$sql" >"${tmp_dir}/${report}.csv"
 
   # html
-  csv_to_html "$report" >"${tmp_dir}/${report}.html"
+  #csv_to_html "$report" >"${tmp_dir}/${report}.html"
 
+  set +e
   setup_email
   email "$report" "$distro_list"
-  #email_aws "$report" "$distro_list"
+  echo 'now trying aws ses'
+  email_aws "$report" "$distro_list"
 }
 
 daily(){

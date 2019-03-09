@@ -43,9 +43,10 @@ build_minidocker_image(){
     --include '/usr/lib/python3.5/*' \
     -E bash -E cat -E ls -E head -E tail -E mkdir -E date -E touch \
     -E sleep -E grep -E uname -E tr -E base64 -E sed \
-    -E jq -E aws -E curl -E which -E mutt -E mutt_dotlock \
+    -E jq -E aws -E curl -E which -E mutt -E mutt_dotlock -E gpgsm \
     -E '/usr/local/src/athena' -E '/usr/local/src/util' \
     -E '/usr/local/deploy/bin/run-job' -E '/usr/local/src/run-it' \
+    -E '/tmp/portfolio.csv' -E '/tmp/portfolio.html' \
     -- /usr/local/deploy/bin/run-job
 
   docker login -u $QUAY_ROBOT_USERNAME -p $QUAY_ROBOT_PASSWORD 'quay.io'
