@@ -90,7 +90,7 @@ ${body}
 
 --NextPart
 Content-Type: text/csv;
-Content-Disposition: attachment; filename=\"${report}.csv\"
+Content-Disposition: attachment; filename=${report}.csv
 Content-Transfer-Encoding: base64
 
 ${attachment}
@@ -103,23 +103,25 @@ jq -n --arg data "$msg" '{Data: $data}' >"/tmp/${report}.json"
     aws ses \
       send-raw-email \
       --region us-east-1 \
-      --raw-message "file:///tmp/${report}.json"
+      --raw-message "file://${tmp_dir}/${report}.json"
   elif [[ $(whoami) == 'sbx_'* ]]; then
+    set +e
     aws ses \
       send-raw-email \
       --region us-east-1 \
-      --raw-message "file:///tmp/${report}.json"
+      --raw-message "file://${tmp_dir}/${report}.json"
 
-    #aws ses \
-      #send-raw-email \
-      #--region us-east-1 \
-      #--raw-message "fileb:///tmp/${report}.json"
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "fileb://${tmp_dir}/${report}.json"
+    set -e
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \
       --profile personal \
       --region us-east-1 \
-      --raw-message "file:///tmp/${report}.json"
+      --raw-message "file://${tmp_dir}/${report}.json"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi

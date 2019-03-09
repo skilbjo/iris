@@ -21,7 +21,7 @@ ${body}
 
 --NextPart
 Content-Type: text/csv;
-Content-Disposition: attachment; filename=\"${report}.csv\"
+Content-Disposition: attachment; filename=${report}.csv
 Content-Transfer-Encoding: base64
 
 ${attachment}
