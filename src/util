@@ -55,7 +55,7 @@ set header_cache        = ~/.mutt/cache/headers
 set message_cachedir    = ~/.mutt/cache/bodies
 set certificate_file    = ~/.mutt/certificates"
 
-  echo $muttrc >>"${home_dir}/.muttrc"
+  echo "$muttrc" >>"${home_dir}/.muttrc"
 }
 
 email_aws(){
