@@ -19,7 +19,6 @@ setup(){
   elif [[ $(whoami) == 'sbx_'* ]]; then
     source "${src_dir}/athena"
     setup_aws
-    aws --version
   elif [[ $(whoami) == 'skilbjo' ]]; then
     source "/Users/skilbjo/dev/engineering/src/athena.user"
   else
@@ -49,8 +48,8 @@ _report(){
     -c "$sql" \
     >"${tmp_dir}/${report}.html"
 
-  #email "$report" "$distro_list"  # fix mutt on alpine. getting "No authenticators available"
-  email_aws "$report" "$distro_list"
+  email "$report" "$distro_list"
+  #email_aws "$report" "$distro_list"
 }
 
 _report_athena(){
@@ -67,7 +66,9 @@ _report_athena(){
   # html
   csv_to_html "$report" >"${tmp_dir}/${report}.html"
 
-  email_aws "$report" "$distro_list"
+  setup_email
+  email "$report" "$distro_list"
+  #email_aws "$report" "$distro_list"
 }
 
 daily(){
