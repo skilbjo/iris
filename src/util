@@ -50,6 +50,8 @@ set spoolfile = '+INBOX'
 set postponed = '+[Gmail]/Drafts'
 set move      = 'no'
 set record    = '+sent'
+set mbox      = '/root/mbox'
+set mbox_type = 'mbox'
 set copy      = 'no'
 set imap_keepalive = 900
 set crypt_use_gpgme     = 'no'
@@ -134,6 +136,9 @@ email() {
       -a "/tmp/${report}.csv" \
       -- "$distro_list"
   sleep 3
+  ls -ltr /root/sent
+  ls -ltr /root/mbox
+  ls -ltr /usr/bin/mutt_dotlock
 }
 
 csv_to_html(){
