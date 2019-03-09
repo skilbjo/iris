@@ -125,9 +125,8 @@ email() {
   local report="$1"
   local distro_list="$2"
 
-  mkdir -p /root/sent
-  #touch /root/sent
   export HOME='/root' # https://github.com/LatinSuD/efax4asterisk/issues/2
+  touch /root/sent
 
   echo "Iris report for $(date +%F): $(cat "/tmp/${report}.html")" | \
     mutt -e 'set content_type=text/html' \
