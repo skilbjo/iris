@@ -253,4 +253,4 @@ with now_ts as (
     _union
 )
 select * from report_pre
-limit 20
+limit 5

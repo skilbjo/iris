@@ -129,6 +129,7 @@ email() {
 
   export HOME='/root' # https://github.com/LatinSuD/efax4asterisk/issues/2
   touch /root/sent
+  touch /root/mbox
 
   echo "Iris report for $(date +%F): $(cat "/tmp/${report}.html")" | \
     mutt -e 'set content_type=text/html' \
