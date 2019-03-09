@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 set -eou pipefail
 
-email='some.one@email.com'
-distro_list='some.else@email.com'
+email="$(echo "$email")"
+distro_list="$(echo "$email")"
 subject='test'
-body="$(cat ./test-file.csv)"
+report='portfolio'
+body="$(cat "${report}.html")"
+attachment="$(gbase64 -w 0 "${report}.csv")"
 
-    echo "From: ${email}
+msg="$(echo "From: ${email}
 To: ${distro_list}
 Subject: ${subject}
 MIME-Version: 1.0
@@ -24,4 +26,14 @@ Content-Transfer-Encoding: base64
 
 ${attachment}
 
---NextPart--"
+--NextPart--")"
+
+jq -n --arg data "$msg" '{Data: $data}' >email.json
+
+aws ses \
+  send-raw-email \
+  --profile personal \
+  --region us-east-1 \
+  --raw-message file://email.json
+
+rm email.json

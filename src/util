@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-set -eou pipefail
+
+ping_healthchecks(){
+  job_uuid="$1"
+
+  curl -fsS --retry 3 "https://hc-ping.com/${job_uuid}"
+}
 
 setup_aws(){
   if [[ $(whoami) == 'root' ]]; then
@@ -65,14 +70,34 @@ email_aws(){
   local report="$1"
   local distro_list="$2"
   local subject="Iris report for ${report} on $(date +%F)"
-  local body="Iris report for $(date +%F): $(cat "/tmp/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
   if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
-    local attachment="$(base64 -w 0 /tmp/${report}.csv)"
+    local attachment="$(base64 -w 0 "${tmp_dir}/${report}.csv")"
   elif [[ $(whoami) == 'skilbjo' ]]; then
-    local attachment="$(gbase64 -w 0 /tmp/${report}.csv)"
+    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}.csv")"
   fi
 
-  echo "{\"Data\": \"From: ${email}\\nTo: ${distro_list}\\nSubject: ${subject}\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\\\"NextPart\\\"\\n\\n--NextPart\\nContent-Type: text/html;\\n\\n${body}\\n\\n--NextPart\\nContent-Type: text/csv;\\nContent-Disposition: attachment; filename=\\\"${report}.csv\\\"\\nContent-Transfer-Encoding: base64\\n\\n${attachment}\\n\\n--NextPart--\"}" >"/tmp/${report}.json"
+  local msg="$(echo "From: ${email}
+To: ${distro_list}
+Subject: ${subject}
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed; boundary=\"NextPart\"
+
+--NextPart
+Content-Type: text/html;
+
+${body}
+
+--NextPart
+Content-Type: text/csv;
+Content-Disposition: attachment; filename=\"${report}.csv\"
+Content-Transfer-Encoding: base64
+
+${attachment}
+
+--NextPart--")"
+
+jq -n --arg data "$msg" '{Data: $data}' >"/tmp/${report}.json"
 
   if [[ $(whoami) == 'root' ]]; then
     aws ses \
@@ -80,70 +105,15 @@ email_aws(){
       --region us-east-1 \
       --raw-message "file:///tmp/${report}.json"
   elif [[ $(whoami) == 'sbx_'* ]]; then
-    ls -lh "/tmp/${report}.json"
-
-    set +e
-    cat "/tmp/${report}.json"
-
     aws ses \
       send-raw-email \
       --region us-east-1 \
       --raw-message "file:///tmp/${report}.json"
 
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "fileb:///tmp/${report}.json"
-    set -e
-
-  elif [[ $(whoami) == 'skilbjo' ]]; then
-    aws ses \
-      send-raw-email \
-      --profile personal \
-      --region us-east-1 \
-      --raw-message "file:///tmp/${report}.json"
-  else
-    >&2 echo "user is: $(whoami), add to setup fn"
-  fi
-}
-
-email_aws_no_attachment(){
-  local report="$1"
-  local distro_list="$2"
-  local subject="Iris report for ${report} on $(date +%F)"
-  local body="Iris report for $(date +%F): $(cat "/tmp/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
-  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
-    local attachment="$(base64 -w 0 /tmp/${report}.csv)"
-  elif [[ $(whoami) == 'skilbjo' ]]; then
-    local attachment="$(gbase64 -w 0 /tmp/${report}.csv)"
-  fi
-
-  echo "{\"Data\": \"From: ${email}\\nTo: ${distro_list}\\nSubject: ${subject}\\nMIME-Version: 1.0\\nContent-type: Multipart/Mixed; boundary=\\\"NextPart\\\"\\n\\n--NextPart\\nContent-Type: text/html;\\n\\n${body}\\n\\n--NextPart\\n\"}" >"/tmp/${report}.json"
-
-  if [[ $(whoami) == 'root' ]]; then
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "file:///tmp/${report}.json"
-  elif [[ $(whoami) == 'sbx_'* ]]; then
-    ls -lh "/tmp/${report}.json"
-
-    cat "/tmp/${report}.json"
-
-    set +e
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "file:///tmp/${report}.json"
-    set -e
-
-    set +e
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "fileb:///tmp/${report}.json"
-    set -e
-
+    #aws ses \
+      #send-raw-email \
+      #--region us-east-1 \
+      #--raw-message "fileb:///tmp/${report}.json"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \
@@ -183,32 +153,4 @@ csv_to_html(){
   echo '</table>'                                                  >>"/tmp/${report}"
 
   cat "/tmp/${report}"
-}
-
-exit_if(){
-  case "$@" in
-    weekend )
-      case "$(date +%a)" in
-        Sat | Sun)
-          exit 0 ;; # silently exit - we don't care if not a weekday
-        * )
-          ;;
-      esac
-      ;;
-    holiday )
-      set +u
-      if [[ ! -z $db_uri && "True" == $(psql $db_uri -tc 'select "official_public_holiday?" from dw.date_dim where date = now()::date;' | awk '{$1=$1};1' | head -n1) ]]; then
-        exit 0
-      fi
-      set -u
-      ;;
-    *)
-      ;;
-  esac
-}
-
-ping_healthchecks(){
-  job_uuid="$1"
-
-  curl -fsS --retry 3 "https://hc-ping.com/${job_uuid}"
 }

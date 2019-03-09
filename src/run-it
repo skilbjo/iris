@@ -3,6 +3,7 @@ set -eou pipefail
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 resources_dir="${dir}/../resources/"
+tmp_dir="/tmp"
 set +u; task="$1"; set -u
 
 setup(){
@@ -25,7 +26,7 @@ setup(){
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
 
-  mkdir -p /tmp/dw && mkdir -p /tmp/athena
+  mkdir -p "${tmp_dir}/dw" && mkdir -p "${tmp_dir}/athena"
 }
 
 _report(){
@@ -40,13 +41,13 @@ _report(){
     -AF',' \
     --pset footer \
     -c "$sql" \
-    >"/tmp/${report}.csv"
+    >"${tmp_dir}/${report}.csv"
 
   # html
   psql "$db_uri" \
     --html \
     -c "$sql" \
-    >"/tmp/${report}.html"
+    >"${tmp_dir}/${report}.html"
 
   #email "$report" "$distro_list"  # fix mutt on alpine. getting "No authenticators available"
   email_aws "$report" "$distro_list"
@@ -61,10 +62,10 @@ _report_athena(){
     sed "s/:user/${user}/")"
 
   # csv
-  query "$sql" >"/tmp/${report}.csv"
+  query "$sql" >"${tmp_dir}/${report}.csv"
 
   # html
-  csv_to_html "$report" >"/tmp/${report}.html"
+  csv_to_html "$report" >"${tmp_dir}/${report}.html"
 
   email_aws "$report" "$distro_list"
 }
