@@ -66,8 +66,8 @@ build_minidocker_image() {
 
 setup
 
-#publish
-#publish 'debian'
+publish
+publish 'debian'
 build_minidocker_image
 
-#publish 'arm'
+publish 'arm'
