@@ -49,7 +49,7 @@ set folder    = 'imaps://imap.gmail.com:993'
 set spoolfile = '+INBOX'
 set postponed = '+[Gmail]/Drafts'
 set move      = 'no'
-set record    = '/dev/null'
+set record    = 'no'
 set copy      = 'no'
 set imap_keepalive = 900
 set crypt_use_gpgme     = 'no'
@@ -124,6 +124,8 @@ jq -n --arg data "$msg" '{Data: $data}' >"/tmp/${report}.json"
 email() {
   local report="$1"
   local distro_list="$2"
+
+  export HOME='/root' # https://github.com/LatinSuD/efax4asterisk/issues/2
 
   echo "Iris report for $(date +%F): $(cat "/tmp/${report}.html")" | \
     mutt -e 'set content_type=text/html' \
