@@ -50,8 +50,6 @@ set spoolfile = '+INBOX'
 set postponed = '+[Gmail]/Drafts'
 set move      = 'no'
 set record    = '+sent'
-set mbox      = '/root/mbox'
-set mbox_type = 'mbox'
 set copy      = 'no'
 set imap_keepalive = 900
 set crypt_use_gpgme     = 'no'
@@ -129,7 +127,7 @@ email() {
 
   export HOME='/root' # https://github.com/LatinSuD/efax4asterisk/issues/2
   touch /root/sent
-  touch /root/mbox
+  mutt_dotlock -t
 
   echo "Iris report for $(date +%F): $(cat "/tmp/${report}.html")" | \
     mutt -e 'set content_type=text/html' \
