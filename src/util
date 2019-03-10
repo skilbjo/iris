@@ -117,10 +117,45 @@ jq -n --arg data "$msg" '{Data: $data}' >"/tmp/${report}.json"
 email() {
   local report="$1"
   local distro_list="$2"
+  local subject="Iris report for ${report} on $(date +%F)"
+  local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+    local attachment="$(base64 -w 0 "${tmp_dir}/${report}.csv")"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}.csv")"
+  fi
 
-  export HOME='/root' # https://github.com/LatinSuD/efax4asterisk/issues/2
-  touch /root/sent
-  mutt_dotlock -t
+  local msg="$(echo "From: ${email}
+To: ${distro_list}
+Subject: ${subject}
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed; boundary=\"NextPart\"
+
+--NextPart
+Content-Type: text/html;
+
+${body}
+
+--NextPart
+Content-Type: text/csv;
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename=${report}.csv
+
+${attachment}
+
+--NextPart--")"
+
+  echo "$msg" >"${tmp_dir}/${report}.txt"
+
+  curl \
+    --insecure \
+    --ssl-reqd \
+    --url 'smtps://smtp.gmail.com:465' \
+    --mail-from "$email" \
+    --mail-rcpt "$email" \
+    --user "${email}:${email_pw}" \
+    --upload-file "${tmp_dir}/${report}.txt"
+  sleep 2
 
   echo "Iris report for $(date +%F): $(cat "/tmp/${report}.html")" | \
     mutt -e 'set content_type=text/html' \
