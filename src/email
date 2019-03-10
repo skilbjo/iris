@@ -1,0 +1,147 @@
+#!/usr/bin/env bash
+
+mutt_setup(){
+  if [[ $(whoami) == 'root' ]]; then
+    local home_dir='/root'
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    local home_dir="/home/$(whoami)"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    echo 'Easy, big guy...' && exit 1
+  fi
+
+  local muttrc="set realname  = 'Iris'
+set from      = '${email}'
+set imap_user = '${email}'
+set imap_pass = '${email_pw}'
+set smtp_pass = '${email_pw}'
+set smtp_url  = 'smtps://"$(echo "$email" | sed 's/@.*//')"@smtp.gmail.com:465/'
+set folder    = 'imaps://imap.gmail.com:993'
+set spoolfile = '+INBOX'
+set postponed = '+[Gmail]/Drafts'
+set move      = 'no'
+set record    = '+sent'
+set copy      = 'no'
+set imap_keepalive = 900
+set crypt_use_gpgme     = 'no'
+set header_cache        = ~/.mutt/cache/headers
+set message_cachedir    = ~/.mutt/cache/bodies
+set certificate_file    = ~/.mutt/certificates"
+
+  echo "$muttrc" >"${home_dir}/.muttrc"
+}
+
+create_mime_email(){
+  local report="$1"
+  local distro_list="$2"
+  local subject="Iris report for ${report} on $(date +%F)"
+  local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+    local attachment="$(base64 -w 0 "${tmp_dir}/${report}.csv")"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}.csv")"
+  fi
+
+  local mime_email="$(echo "From: ${email}
+To: ${distro_list}
+Subject: ${subject}
+MIME-Version: 1.0
+Content-Type: Multipart/Mixed; boundary=\"NextPart\"
+
+--NextPart
+Content-Type: text/html;
+
+${body}
+
+--NextPart
+Content-Type: text/csv;
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename=${report}.csv
+
+${attachment}
+
+--NextPart--")"
+
+  echo "$mime_email"
+}
+
+aws_ses(){
+  local report="$1"
+  local distro_list="$2"
+  local msg="$(create_mime_email "$report" "$distro_list")"
+
+  jq -n --arg data "$msg" '{Data: $data}' >"${tmp_dir}/${report}.json"
+
+  if [[ $(whoami) == 'root' ]]; then
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "file://${tmp_dir}/${report}.json"
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    # Query rsults with lines longer than 8 fail on AWS Lambda
+    #   (but OK on odroid/pi)
+    # --raw-message "fileb://" results in
+    #   "'in <string>' requires string as left operand, not int"
+    # mutt also fails, with 'Couldn't lock /sent' and
+    #   '241 Segmentation fault (core dumped) | mutt -e 'set content_type=text/html' -s "Iris report for $report on $(date +%F)" -a "/tmp/${report}.csv" -- "$distro_list"'
+    aws ses \
+      send-raw-email \
+      --region us-east-1 \
+      --raw-message "file://${tmp_dir}/${report}.json"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    aws ses \
+      send-raw-email \
+      --profile personal \
+      --region us-east-1 \
+      --raw-message "file://${tmp_dir}/${report}.json"
+  else
+    >&2 echo "user is: $(whoami), add to setup fn"
+  fi
+}
+
+curl_email(){
+  local report="$1"
+  local distro_list="$2"
+  local msg="$(create_mime_email "$report" "$distro_list")"
+
+  echo "$msg" >"${tmp_dir}/${report}.txt"
+
+  curl \
+    --insecure \
+    --ssl-reqd \
+    --url 'smtps://smtp.gmail.com:465' \
+    --mail-from "$email" \
+    --mail-rcpt "$email" \
+    --user "${email}:${email_pw}" \
+    --upload-file "${tmp_dir}/${report}.txt"
+  sleep 2
+}
+
+mutt_email() {
+  local report="$1"
+  local distro_list="$2"
+  local msg="$(create_mime_email "$report" "$distro_list")"
+
+  echo "Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html")" | \
+    mutt -e 'set content_type=text/html' \
+      -s "Iris report for $report on $(date +%F)" \
+      -a "${tmp_dir}/${report}.csv" \
+      -- "$distro_list"
+  sleep 2
+}
+
+email(){
+  local report="$1"
+  local distro_list="$2"
+
+  if [[ $(whoami) == 'root' ]]; then
+    # odroid / pi1
+    mutt_setup
+    mutt_email "$report" "$distro_list"
+  elif [[ $(whoami) == 'sbx_'* ]]; then
+    # AWS Lambda
+    curl_email "$report" "$distro_list"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    # osx
+    mutt_email "$report" "$distro_list"
+  fi
+}

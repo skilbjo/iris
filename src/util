@@ -6,7 +6,7 @@ ping_healthchecks(){
   curl -fsS --retry 3 "https://hc-ping.com/${job_uuid}"
 }
 
-setup_aws(){
+add_aws_vars(){
   if [[ $(whoami) == 'root' ]]; then
     local home_dir='/root'
   elif [[ $(whoami) == 'sbx_'* ]]; then
@@ -30,155 +30,20 @@ setup_aws(){
   export AWS_SECRET_ACCESS_KEY="$aws_secret_access_key"
 }
 
-setup_email(){
-  if [[ $(whoami) == 'root' ]]; then
-    local home_dir='/root'
-  elif [[ $(whoami) == 'sbx_'* ]]; then
-    local home_dir="/home/$(whoami)"
-  elif [[ $(whoami) == 'skilbjo' ]]; then
-    echo 'Easy, big guy...' && exit 1
-  fi
-
-  local muttrc="set realname  = 'Iris'
-set from      = '${email}'
-set imap_user = '${email}'
-set imap_pass = '${email_pw}'
-set smtp_pass = '${email_pw}'
-set smtp_url  = 'smtps://"$(echo "$email" | sed 's/@.*//')"@smtp.gmail.com:465/'
-set folder    = 'imaps://imap.gmail.com:993'
-set spoolfile = '+INBOX'
-set postponed = '+[Gmail]/Drafts'
-set move      = 'no'
-set record    = '+sent'
-set copy      = 'no'
-set imap_keepalive = 900
-set crypt_use_gpgme     = 'no'
-set header_cache        = ~/.mutt/cache/headers
-set message_cachedir    = ~/.mutt/cache/bodies
-set certificate_file    = ~/.mutt/certificates"
-
-  echo "$muttrc" >>"${home_dir}/.muttrc"
-}
-
-email_aws(){
-  local report="$1"
-  local distro_list="$2"
-  local subject="Iris report for ${report} on $(date +%F)"
-  local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
-  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
-    local attachment="$(base64 -w 0 "${tmp_dir}/${report}.csv")"
-  elif [[ $(whoami) == 'skilbjo' ]]; then
-    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}.csv")"
-  fi
-
-  local msg="$(echo "From: ${email}
-To: ${distro_list}
-Subject: ${subject}
-MIME-Version: 1.0
-Content-Type: Multipart/Mixed; boundary=\"NextPart\"
-
---NextPart
-Content-Type: text/html;
-
-${body}
-
---NextPart
-Content-Type: text/csv;
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename=${report}.csv
-
-${attachment}
-
---NextPart--")"
-
-jq -n --arg data "$msg" '{Data: $data}' >"/tmp/${report}.json"
-
-  if [[ $(whoami) == 'root' ]]; then
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "file://${tmp_dir}/${report}.json"
-  elif [[ $(whoami) == 'sbx_'* ]]; then
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "file://${tmp_dir}/${report}.json"
-  elif [[ $(whoami) == 'skilbjo' ]]; then
-    aws ses \
-      send-raw-email \
-      --profile personal \
-      --region us-east-1 \
-      --raw-message "file://${tmp_dir}/${report}.json"
-  else
-    >&2 echo "user is: $(whoami), add to setup fn"
-  fi
-}
-
-email() {
-  local report="$1"
-  local distro_list="$2"
-  local subject="Iris report for ${report} on $(date +%F)"
-  local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
-  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
-    local attachment="$(base64 -w 0 "${tmp_dir}/${report}.csv")"
-  elif [[ $(whoami) == 'skilbjo' ]]; then
-    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}.csv")"
-  fi
-
-  local msg="$(echo "From: ${email}
-To: ${distro_list}
-Subject: ${subject}
-MIME-Version: 1.0
-Content-Type: Multipart/Mixed; boundary=\"NextPart\"
-
---NextPart
-Content-Type: text/html;
-
-${body}
-
---NextPart
-Content-Type: text/csv;
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename=${report}.csv
-
-${attachment}
-
---NextPart--")"
-
-  echo "$msg" >"${tmp_dir}/${report}.txt"
-
-  curl \
-    --insecure \
-    --ssl-reqd \
-    --url 'smtps://smtp.gmail.com:465' \
-    --mail-from "$email" \
-    --mail-rcpt "$email" \
-    --user "${email}:${email_pw}" \
-    --upload-file "${tmp_dir}/${report}.txt"
-  sleep 2
-
-  echo "Iris report for $(date +%F): $(cat "/tmp/${report}.html")" | \
-    mutt -e 'set content_type=text/html' \
-      -s "Iris report for $report on $(date +%F)" \
-      -a "/tmp/${report}.csv" \
-      -- "$distro_list"
-  sleep 3
-}
-
 csv_to_html(){
   local report="$1"
 
-  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"/tmp/${report}"
+  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"${tmp_dir}/${report}"
   local header='true'
-  cat "/tmp/${report}.csv" | while read line; do
+  cat "${tmp_dir}/${report}.csv" | while read line; do
     if [[ $header == 'true' ]]; then
-      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"/tmp/${report}";
+      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"${tmp_dir}/${report}";
       header='false';
     else
-      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"/tmp/${report}";
+      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"${tmp_dir}/${report}";
     fi
   done
-  echo '</table>'                                                  >>"/tmp/${report}"
+  echo '</table>'                                                  >>"${tmp_dir}/${report}"
 
-  cat "/tmp/${report}"
+  cat "${tmp_dir}/${report}"
 }
