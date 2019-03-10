@@ -99,17 +99,10 @@ jq -n --arg data "$msg" '{Data: $data}' >"/tmp/${report}.json"
       --region us-east-1 \
       --raw-message "file://${tmp_dir}/${report}.json"
   elif [[ $(whoami) == 'sbx_'* ]]; then
-    set +e
     aws ses \
       send-raw-email \
       --region us-east-1 \
       --raw-message "file://${tmp_dir}/${report}.json"
-
-    aws ses \
-      send-raw-email \
-      --region us-east-1 \
-      --raw-message "fileb://${tmp_dir}/${report}.json"
-    set -e
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \
@@ -135,9 +128,6 @@ email() {
       -a "/tmp/${report}.csv" \
       -- "$distro_list"
   sleep 3
-  ls -ltr /root/sent
-  ls -ltr /root/mbox
-  ls -ltr /usr/bin/mutt_dotlock
 }
 
 csv_to_html(){
