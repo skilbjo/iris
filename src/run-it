@@ -73,6 +73,7 @@ daily(){
   set +u; local db="$db_uri"; set -u
     if [[ ! -z $db ]]; then
       _report portfolio 'skilbjo' "$email" && \
+      _report portfolio 'michie'  "$email" && \
         ping_healthchecks "$healthchecks_io_iris";
     else
       _report_athena portfolio 'skilbjo' "$email"
