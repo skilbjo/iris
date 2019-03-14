@@ -32,13 +32,19 @@ set certificate_file    = ~/.mutt/certificates"
 
 create_mime_email(){
   local report="$1"
+  local report_name="$(echo "$report" | sed 's/\.[^.]*$//')"
   local distro_list="$2"
+  set +u; local html="$3"; set -u
   local subject="Iris report for ${report} on $(date +%F)"
-  local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  if [[ -z $html ]]; then
+    local body="Iris report for $(date +%F). See attached file."
+  else
+    local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report_name}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  fi
   if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
-    local attachment="$(base64 -w 0 "${tmp_dir}/${report}.csv")"
+    local attachment="$(base64 -w 0 "${tmp_dir}/${report}")"
   elif [[ $(whoami) == 'skilbjo' ]]; then
-    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}.csv")"
+    local attachment="$(gbase64 -w 0 "${tmp_dir}/${report}")"
   fi
 
   local mime_email="$(echo "From: ${email}
@@ -55,10 +61,8 @@ ${body}
 --NextPart
 Content-Type: text/csv;
 Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename=${report}.csv
-
+Content-Disposition: attachment; filename=${report}
 ${attachment}
-
 --NextPart--")"
 
   echo "$mime_email"
@@ -66,19 +70,19 @@ ${attachment}
 
 aws_ses(){
   local report="$1"
+  local report_name="$(echo "$report" | sed 's/\.[^.]*$//')"
   local distro_list="$2"
-  local msg="$(create_mime_email "$report" "$distro_list")"
+  local msg="$(create_mime_email "$report" "$distro_list" "$html")"
 
-  jq -n --arg data "$msg" '{Data: $data}' >"${tmp_dir}/${report}.json"
+  jq -n --arg data "$msg" '{Data: $data}' >"${tmp_dir}/${report_name}.json"
 
   if [[ $(whoami) == 'root' ]]; then
     aws ses \
       send-raw-email \
       --region us-east-1 \
-      --raw-message "file://${tmp_dir}/${report}.json"
+      --raw-message "file://${tmp_dir}/${report_name}.json"
   elif [[ $(whoami) == 'sbx_'* ]]; then
     # Query rsults with lines longer than 8 fail on AWS Lambda
-    #   (but OK on odroid/pi)
     # --raw-message "fileb://" results in
     #   "'in <string>' requires string as left operand, not int"
     # mutt also fails, with 'Couldn't lock /sent' and
@@ -86,13 +90,13 @@ aws_ses(){
     aws ses \
       send-raw-email \
       --region us-east-1 \
-      --raw-message "file://${tmp_dir}/${report}.json"
+      --raw-message "file://${tmp_dir}/${report_name}.json"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     aws ses \
       send-raw-email \
       --profile personal \
       --region us-east-1 \
-      --raw-message "file://${tmp_dir}/${report}.json"
+      --raw-message "file://${tmp_dir}/${report_name}.json"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
@@ -100,10 +104,12 @@ aws_ses(){
 
 curl_email(){
   local report="$1"
+  local report_name="$(echo "$report" | sed 's/\.[^.]*$//')"
   local distro_list="$2"
-  local msg="$(create_mime_email "$report" "$distro_list")"
+  set +u; local html="$3"; set -u
+  local msg="$(create_mime_email "$report" "$distro_list" "$html")"
 
-  echo "$msg" >"${tmp_dir}/${report}.txt"
+  echo "$msg" >"${tmp_dir}/${report_name}.txt"
 
   curl \
     --insecure \
@@ -112,19 +118,25 @@ curl_email(){
     --mail-from "$email" \
     --mail-rcpt "$email" \
     --user "${email}:${email_pw}" \
-    --upload-file "${tmp_dir}/${report}.txt"
+    --upload-file "${tmp_dir}/${report_name}.txt"
   sleep 2
 }
 
 mutt_email() {
   local report="$1"
+  local report_name="$(echo "$report" | sed 's/\.[^.]*$//')"
   local distro_list="$2"
-  local msg="$(create_mime_email "$report" "$distro_list")"
+  set +u; local html="$3"; set -u
+  if [[ -z $html ]]; then
+    local body="Iris report for $(date +%F). See attached file."
+  else
+    local body="Iris report for $(date +%F): $(cat "${tmp_dir}/${report_name}.html" | sed 's/\"//g' | tr -d "\n\r")"
+  fi
 
-  echo "Iris report for $(date +%F): $(cat "${tmp_dir}/${report}.html")" | \
+  echo "$body" | \
     mutt -e 'set content_type=text/html' \
       -s "Iris report for $report on $(date +%F)" \
-      -a "${tmp_dir}/${report}.csv" \
+      -a "${tmp_dir}/${report}" \
       -- "$distro_list"
   sleep 2
 }
@@ -132,16 +144,17 @@ mutt_email() {
 email(){
   local report="$1"
   local distro_list="$2"
+  set +u; local html="$3"; set -u
 
   if [[ $(whoami) == 'root' ]]; then
-    # odroid / pi1
-    mutt_setup
-    mutt_email "$report" "$distro_list"
+    # docker (k8s, odroid, pi)
+    curl_email "$report" "$distro_list" "$html"
   elif [[ $(whoami) == 'sbx_'* ]]; then
     # AWS Lambda
-    curl_email "$report" "$distro_list"
+    curl_email "$report" "$distro_list" "$html"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     # osx
-    mutt_email "$report" "$distro_list"
+    curl_email "$report" "$distro_list" "$html"
+    #mutt_email "$report" "$distro_list" "$html"
   fi
 }

@@ -3,7 +3,7 @@ set -eou pipefail
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 resources_dir="${dir}/../resources/"
-tmp_dir="/tmp"
+tmp_dir="$(mkdir -p "/tmp/iris" && echo "/tmp/iris")"
 set +u; task="$1"; set -u
 
 setup(){
@@ -22,6 +22,7 @@ setup(){
     add_aws_vars
   elif [[ $(whoami) == 'skilbjo' ]]; then
     source "/Users/skilbjo/dev/engineering/src/athena.user"
+    source "/Users/skilbjo/dev/engineering/src/email"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
@@ -36,20 +37,10 @@ _report(){
 
   local sql="$(cat "${resources_dir}/dw/${report}.sql" | sed "s/:user/${user}/")"
 
-  # csv
-  psql "$db_uri" \
-    -AF',' \
-    --pset footer \
-    -c "$sql" \
-    >"${tmp_dir}/${report}.csv"
+  psql "$db_uri" --html -c "$sql"               >"${tmp_dir}/${report}.html" # html
+  psql "$db_uri" -AF',' --pset footer -c "$sql" >"${tmp_dir}/${report}.csv"  # csv
 
-  # html
-  psql "$db_uri" \
-    --html \
-    -c "$sql" \
-    >"${tmp_dir}/${report}.html"
-
-  email "$report" "$distro_list"
+  email "$report" "$distro_list" 'html'
 }
 
 _report_athena(){
@@ -60,11 +51,8 @@ _report_athena(){
   local sql="$(cat "${resources_dir}/athena/${report}_athena.sql" | \
     sed "s/:user/${user}/")"
 
-  # csv
-  query "$sql" >"${tmp_dir}/${report}.csv"
-
-  # html
-  csv_to_html "$report" >"${tmp_dir}/${report}.html"
+  query "$sql"          >"${tmp_dir}/${report}.csv"  # csv
+  csv_to_html "$report" >"${tmp_dir}/${report}.html" # html
 
   email "$report" "$distro_list"
 }
