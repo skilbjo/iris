@@ -45,5 +45,5 @@ csv_to_html(){
   done
   echo '</table>'                                                  >>"${tmp_dir}/${report}.tmp"
 
-  cat "${tmp_dir}/${report}" && rm "${tmp_dir}/${report}.tmp"
+  cat "${tmp_dir}/${report}.tmp" && rm "${tmp_dir}/${report}.tmp"
 }
