@@ -40,7 +40,7 @@ _report(){
   psql "$db_uri" --html -c "$sql"               >"${tmp_dir}/${report}.html" # html
   psql "$db_uri" -AF',' --pset footer -c "$sql" >"${tmp_dir}/${report}.csv"  # csv
 
-  email "$report" "$distro_list" 'html'
+  email "${report}.csv" "$distro_list" 'html'
 }
 
 _report_athena(){
@@ -54,7 +54,7 @@ _report_athena(){
   query "$sql"          >"${tmp_dir}/${report}.csv"  # csv
   csv_to_html "$report" >"${tmp_dir}/${report}.html" # html
 
-  email "$report" "$distro_list"
+  email "${report}.csv" "$distro_list" 'html'
 }
 
 daily(){

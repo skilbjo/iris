@@ -33,17 +33,17 @@ add_aws_vars(){
 csv_to_html(){
   local report="$1"
 
-  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"${tmp_dir}/${report}"
+  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"${tmp_dir}/${report}.tmp"
   local header='true'
   cat "${tmp_dir}/${report}.csv" | while read line; do
     if [[ $header == 'true' ]]; then
-      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"${tmp_dir}/${report}";
+      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"${tmp_dir}/${report}.tmp";
       header='false';
     else
-      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"${tmp_dir}/${report}";
+      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"${tmp_dir}/${report}.tmp";
     fi
   done
-  echo '</table>'                                                  >>"${tmp_dir}/${report}"
+  echo '</table>'                                                  >>"${tmp_dir}/${report}.tmp"
 
-  cat "${tmp_dir}/${report}"
+  cat "${tmp_dir}/${report}" && rm "${tmp_dir}/${report}.tmp"
 }
