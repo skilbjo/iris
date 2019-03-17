@@ -27,8 +27,8 @@ with now_ts as (
     cast(portfolio.quantity as decimal(10,4))      as quantity,
     cast(portfolio.cost_per_share as decimal(6,2)) as cost_per_share
   from
-    dw.portfolio_dim portfolio
-    join dw.markets_dim markets on markets.ticker = portfolio.ticker
+    datalake.portfolio portfolio
+    join datalake.markets markets on markets.ticker = portfolio.ticker
   where
     portfolio.dataset = ( select datasource from datasource )
     and user = ( select _user from _user )
@@ -39,12 +39,11 @@ with now_ts as (
     max(cast(date as date)) max_known_date
   from (
     select date, dataset, count(*)
-    from dw.equities_fact
+    from datalake.equities
     where
-      s3uploaddate >= cast((select beginning_of_year from beginning_of_year ) as date)
-      and s3uploaddate <> cast((select now from now) as date)
+      date >= cast((select beginning_of_year from beginning_of_year ) as date)
+      and date <> cast((select now from now) as date)
       and ticker in ( select distinct ticker from portfolio )
-      and dataset <> 'ALPHA-VANTAGE'
     group by
       1,2
     having count(*) > 30
@@ -53,11 +52,11 @@ with now_ts as (
   select
     currency, cast(rate as decimal(24,14)) rate
   from
-    dw.currency_fact
+    datalake.currency
   where
     currency = 'GBP'
-    and ( s3uploaddate = cast((select today from date ) as date)
-    or    s3uploaddate = cast((select yesterday from date ) as date ))
+    and ( date = cast((select today from date ) as date)
+    or    date = cast((select yesterday from date ) as date ))
   order by date desc
   limit 1
 ), fx_backup as (
@@ -75,12 +74,12 @@ with now_ts as (
     cast(date as date)                     as date,
     avg(case when ticker = 'LON:FCH' then try_cast(close as decimal(10,2)) * (select rate from fx_with_backup where currency = 'GBP') / 100 else try_cast(close as decimal(10,2)) end) as close
   from
-    dw.equities_fact equities
+    datalake.equities equities
   where
-    s3uploaddate    = cast((select today from date) as date)
-    or s3uploaddate = cast((select yesterday from date) as date)
-    or s3uploaddate = cast((select max_known_date from max_known_date) as date)
-    or s3uploaddate = cast((select beginning_of_year from beginning_of_year) as date)
+    date    = cast((select today from date) as date)
+    or date = cast((select yesterday from date) as date)
+    or date = cast((select max_known_date from max_known_date) as date)
+    or date = cast((select beginning_of_year from beginning_of_year) as date)
   group by
     1,2
 ), today as (
