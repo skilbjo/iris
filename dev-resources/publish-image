@@ -43,7 +43,6 @@ build_minidocker_image(){
     --include '/usr/lib/python3.5/*' \
     -E bash -E cat -E ls -E mkdir -E date -E touch -E sleep -E grep -E uname \
     -E tr -E base64 -E sed -E jq -E aws -E curl -E rm \
-    -E mutt -E mutt_dotlock \
     -E '/usr/local/deploy/bin/run-job' -E '/usr/local/src/athena' \
     -E '/usr/local/src/run-it' -E '/usr/local/src/util' -E '/usr/local/src/email' \
     -- /usr/local/deploy/bin/run-job
