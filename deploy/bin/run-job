@@ -17,7 +17,7 @@ update_crond(){
 
 prereqs(){
   if [[ $(whoami) == 'root' ]]; then
-    case $(uname -m) in
+    case "$(uname -m)" in
       arm* )
         deploy_dir='/usr/local/deploy/bin'
         set +e; eval "${deploy_dir}/apk-arm"; update-ca-certificates; apk fix || echo 'Unable to reach apk...'; set -e; # set +e when apk not available
