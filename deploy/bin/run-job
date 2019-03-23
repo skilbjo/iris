@@ -8,8 +8,8 @@ cmd=''
 
 update_crond(){
   case "$(uname)" in
-    ('FreeBSD') sed -i '1i SHELL=/usr/local/bin/bash' "${dir}/deploy/tasks/crontab"
-                sed -i '1i cmd="deploy/bin/run-job'   "${dir}/deploy/tasks/crontab" ;;
+    ('FreeBSD') sed -i '1i SHELL="/usr/local/bin/bash"' "${dir}/deploy/tasks/crontab"
+                sed -i '1i cmd="deploy/bin/run-job"'    "${dir}/deploy/tasks/crontab" ;;
   esac
   sudo cp "${dir}/deploy/tasks/crontab" >"/etc/cron.d/${app}"
 }
