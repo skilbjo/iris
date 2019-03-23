@@ -2,6 +2,7 @@
 set -eou pipefail
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../" && pwd )" && cd "$dir"
+app="$(basename $(pwd))"
 src_dir="${dir}/src"
 set +u; _job="$1"; set -u
 cmd=''
