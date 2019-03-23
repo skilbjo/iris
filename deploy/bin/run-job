@@ -8,10 +8,10 @@ cmd=''
 
 update_crond(){
   case "$(uname)" in
-    ('FreeBSD') sed -i '1i SHELL="/usr/local/bin/bash"' "${dir}/deploy/tasks/crontab"
-                sed -i '1i cmd="deploy/bin/run-job"'    "${dir}/deploy/tasks/crontab" ;;
+    ('FreeBSD') sed -i '' $'1i\\\n SHELL="/usr/local/bin/bash"\n' "${dir}/deploy/tasks/crontab"
+                sed -i '' $'1i\\\n cmd="deploy/bin/run-job"\n'    "${dir}/deploy/tasks/crontab" ;;
   esac
-  sudo cp "${dir}/deploy/tasks/crontab" >"/etc/cron.d/${app}"
+  sudo bash -c "cat ${dir}/deploy/tasks/crontab >/etc/cron.d/${app}"
 }
 
 prereqs(){
@@ -24,7 +24,7 @@ prereqs(){
   fi
 }
 
-if [[ $(uname) == 'FreeBSD' ]]; then update_crond; fi
+if [[ $(uname) == 'FreeBSD' ]]; then git pull -f; update_crond; fi
 
 case "$_job" in
   daily )
