@@ -22,8 +22,12 @@ setup(){
     source "${src_dir}/email"
     add_aws_vars
   elif [[ $(whoami) == 'skilbjo' ]]; then
-    source "/Users/skilbjo/dev/engineering/src/athena.user"
-    source "/Users/skilbjo/dev/engineering/src/email"
+    case "$(uname)" in
+      Darwin )  local prefix='/Users/' ;;
+      FreeBSD ) local prefix='/home/' ;;
+    esac
+    source "${prefix}/skilbjo/dev/engineering/src/athena.user"
+    source "${prefix}/skilbjo/dev/engineering/src/email"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
