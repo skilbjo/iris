@@ -18,6 +18,7 @@ run_container(){
     -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
     -e _email="$(echo $email)" \
     -e email_pw="$(echo $email_pw)" \
+    -e michie="$(echo $michie)" \
     -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
     "${app}:${tag}" bash
 }

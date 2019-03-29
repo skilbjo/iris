@@ -65,8 +65,8 @@ _report_athena(){
 daily(){
   set +u; local db="$db_uri"; set -u
     if [[ ! -z $db ]]; then
-      _report portfolio 'skilbjo' "$email" && \
-      _report portfolio 'michie'  "$email" && \
+      _report portfolio 'skilbjo' "$email"  && \
+      _report portfolio 'michie'  "$michie" && \
         ping_healthchecks "$healthchecks_io_iris";
     else
       _report_athena portfolio 'skilbjo' "$email"
