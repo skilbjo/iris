@@ -6,7 +6,7 @@ jobs:
     steps:
       - checkout
       - run: wget --directory-prefix=/home/circleci https://github.com/grycap/minicon/releases/download/1.2-2/minicon_1.2-2.deb
-      - run: sudo killall -9 apt || true; sudo apt update; sudo apt install -qq jq; sudo dpkg -i /home/circleci/minicon_1.2-2.deb # fixes https://circleci.com/gh/skilbjo/iris/260
+      - run: sudo killall -9 apt || true; sudo apt update; sudo killall -9 apt || true; sudo apt install -qq jq; sudo killall -9 apt || true; sudo dpkg -i /home/circleci/minicon_1.2-2.deb # fixes https://circleci.com/gh/skilbjo/iris/260
       - run: docker info >/dev/null 2>&1 || service docker start
       - run: deploy/bin/publish-image
 
