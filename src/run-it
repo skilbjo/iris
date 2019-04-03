@@ -9,6 +9,8 @@ set +u; task="$1"; set -u
 setup(){
   local src_dir="${dir}"
 
+  export email="${_email}"
+
   source "${dir}/util"
 
   if [[ $(whoami) == 'root' ]]; then
