@@ -8,8 +8,7 @@ arch=''
 case "$(uname -m)" in
   amd64* | x_86* | x86_64* )
     img="quay.io/skilbjo/${app}:latest" ;;
-  arm* )
-    arch='arm'
+  arm* ) arch='arm'
     img="quay.io/skilbjo/${app}:${arch}" ;;
 esac
 
@@ -40,14 +39,20 @@ update_crond(){
 get_current_artifacts && \
   update_crond
 
+# local:            -e aws_access_key_id="$(echo $aws_access_key_id)" \
+# circleci runtime: -e AWS_ACCESS_KEY_ID="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
+
 docker run --rm \
   --name="$(echo $app $@ | tr ' ' '_')" \
-  -e db_uri="$(echo $db_uri)" \
+  -e db_uri="$(echo "${db_uri:-}")" \
   -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
-  -e michie="$(echo $michie)" \
-  -e aws_access_key_id="$(echo $aws_access_key_id)" \
-  -e aws_secret_access_key="$(echo $aws_secret_access_key)" \
+  -e michie="$(echo "${michie:-}")" \
+  -e aws_access_key_id="$(echo "${aws_access_key_id:-}")" \
+  -e aws_secret_access_key="$(echo "${aws_secret_access_key:-}")" \
   -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
+  -e AWS_ACCESS_KEY_ID="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
+  -e AWS_SECRET_ACCESS_KEY="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
+  -e AWS_REGION='us-east-1' \
   "$img" \
   "$job_cmd" $@

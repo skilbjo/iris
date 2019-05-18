@@ -75,7 +75,7 @@ daily(){
       _report portfolio 'michie'  "$michie" && \
         ping_healthchecks "$healthchecks_io_iris"
     else
-      _report_athena portfolio 'skilbjo' "$email"
+      _report_athena portfolio 'skilbjo' 'john.skilbeck@gmail.com'
     fi;
 }
 
