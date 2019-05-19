@@ -52,11 +52,9 @@ docker run --rm \
   -e _email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
   -e michie="$(echo "${michie:-}")" \
-  -e aws_access_key_id="$(echo "${aws_access_key_id:-}")" \
-  -e aws_secret_access_key="$(echo "${aws_secret_access_key:-}")" \
+  -e aws_access_key_id="$(echo "${aws_access_key_id:-$robot_aws_access_key_id}")" \
+  -e aws_secret_access_key="$(echo "${aws_secret_access_key:-$robot_aws_secret_access_key}")" \
+  -e aws_region='us-east-1' \
   -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
-  -e AWS_ACCESS_KEY_ID="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
-  -e AWS_SECRET_ACCESS_KEY="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
-  -e AWS_REGION='us-east-1' \
   "$img" \
   "$job_cmd" $@
