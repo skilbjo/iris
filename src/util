@@ -6,6 +6,31 @@ ping_healthchecks(){
   curl -fsS --retry 3 "https://hc-ping.com/${job_uuid}"
 }
 
+util_setup(){
+  set -eou pipefail
+
+  local dir="$1"  # the below are not local; they are globals for child scripts
+  job_name="$(basename "$dir")"
+  resources_dir="${dir}/../../resources/${job_name}"
+  tmp_dir="$(mkdir -p "/tmp/${job_name}" && echo "/tmp/${job_name}")"
+
+  local hour="$(date +%H)" # if no ${var#0}, bash will interpret 08,09 as octcal and fault
+  if [[ ${hour#0} -eq 23 ]]; then sleep 120; fi # tick over to next day *and* wait for replica to catch up
+
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+    source "${src_dir}/athena"
+    add_aws_vars
+    export local_db='postgres://postgres@localhost/postgres'
+    export email_cmd="${src_dir}/email"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    source "/Users/skilbjo/dev/engineering/src/athena.user"
+    export local_db="$(echo "$docker_psql_uri")" || export local_db='postgres://postgres@localhost/postgres'
+    export email_cmd="/Users/skilbjo/dev/data-engineering/src/email"
+  else
+    >&2 echo "user is: $(whoami), add to setup fn"
+  fi
+}
+
 add_aws_vars(){
   if [[ $(whoami) == 'root' ]]; then
     local home_dir='/root'

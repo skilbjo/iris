@@ -3,15 +3,27 @@ set -eou pipefail
 
 dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 resources_dir="${dir}/../resources/"
+src_dir="${dir}"
+util_setup "$dir"
 tmp_dir="$(mkdir -p "/tmp/iris" && echo "/tmp/iris")"
-set +u; task="$1"; set -u
+
+task=''
+
+source "${dir}/util"
+
+usage(){ echo "Usage: iris-daily: ${0} [--task <morning|night|all...>]" 1>&2; exit 1; }
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -t|--task)  task="$2"; shift ;;
+    --testing)  task='testing' ;;
+  esac
+  shift
+done
+if [[ -z $task ]]; then usage; fi
 
 setup(){
-  local src_dir="${dir}"
-
   export email="${_email}"
 
-  source "${dir}/util"
 
   if [[ $(whoami) == 'root' ]]; then
     source "${src_dir}/athena"
@@ -72,8 +84,7 @@ daily(){
   set +u; local db="$db_uri"; set -u
     if [[ ! -z $db ]]; then
       _report portfolio 'skilbjo' "$email"  && \
-      _report portfolio 'michie'  "$michie" && \
-        ping_healthchecks "$healthchecks_io_iris"
+      _report portfolio 'michie'  "$michie"
     else
       _report_athena portfolio 'skilbjo' 'john.skilbeck@gmail.com'
     fi;
@@ -104,8 +115,9 @@ testing(){
 setup
 
 case "$task" in
-  daily   ) daily ;;
-  weekly  ) weekly ;;
-  testing ) testing ;;
+  daily )     daily && \
+                ping_healthchecks "$healthchecks_io_iris";;
+  weekly )    weekly ;;
+  testing )   testing ;;
   * ) echo 'in src/run-it, no args provided' && exit 1 ;;
 esac
