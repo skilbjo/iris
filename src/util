@@ -99,7 +99,7 @@ _report_athena(){
   local sql="$(cat "${resources_dir}/athena/${report}.sql" | \
     sed "s/:user/${user}/")"
 
-  #query "$sql"           >"${tmp_dir}/${report}.csv"  # csv
+  query "$sql"           >"${tmp_dir}/${report}.csv"  # csv
   #csv_to_html "$report" >"${tmp_dir}/${report}.html" # html  # not needed?
 
   "$email_cmd" \
