@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ping_healthchecks(){
-  job_uuid="$1"
+  local job_uuid="$1"
 
   curl -fsS --retry 3 "https://hc-ping.com/${job_uuid}"
 }
@@ -18,11 +18,11 @@ add_aws_vars(){
   mkdir -p "${home_dir}/.aws"
 
   touch "${home_dir}/.aws/config"
-  echo "[default]"           >"${home_dir}/.aws/config"
-  echo "region = us-east-1" >>"${home_dir}/.aws/config"
+  echo '[default]'           >"${home_dir}/.aws/config"
+  echo 'region = us-east-1' >>"${home_dir}/.aws/config"
 
   touch "${home_dir}/.aws/credentials"
-  echo "[default]"                                       >"${home_dir}/.aws/credentials"
+  echo '[default]'                                       >"${home_dir}/.aws/credentials"
   echo "aws_access_key_id     = $aws_access_key_id"     >>"${home_dir}/.aws/credentials"
   echo "aws_secret_access_key = $aws_secret_access_key" >>"${home_dir}/.aws/credentials"
 
@@ -30,20 +30,82 @@ add_aws_vars(){
   export AWS_SECRET_ACCESS_KEY="$aws_secret_access_key"
 }
 
+util_setup(){
+  set -eou pipefail
+
+  local dir="$1"  # the below are not local; they are globals for child scripts
+  job_name="$(basename "$dir")"
+  resources_dir="${dir}/../../resources/${job_name}"
+  tmp_dir="$(mkdir -p "/tmp/${job_name}" && echo "/tmp/${job_name}")"
+
+  local hour="$(date +%H)" # if no ${var#0}, bash will interpret 08,09 as octcal and fault
+  if [[ ${hour#0} -eq 23 ]]; then sleep 120; fi # tick over to next day *and* wait for replica to catch up
+
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+    source "${src_dir}/athena"
+    add_aws_vars
+    export local_db='postgres://postgres@localhost/postgres'
+    export email_cmd="${src_dir}/email"
+  elif [[ $(whoami) == 'skilbjo' ]]; then
+    source "/Users/skilbjo/dev/engineering/src/athena.user"
+    export local_db="$(echo "$docker_psql_uri")" || export local_db='postgres://postgres@localhost/postgres'
+    export email_cmd="/Users/skilbjo/dev/data-engineering/src/email"
+  else
+    >&2 echo "user is: $(whoami), add to setup fn"
+  fi
+}
+
 csv_to_html(){
   local report="$1"
 
-  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"${tmp_dir}/${report}.tmp"
+  echo '<table border="2" cellspacing="1" cellpadding="2">'         >"${tmp_dir}/${report}"
   local header='true'
   cat "${tmp_dir}/${report}.csv" | while read line; do
     if [[ $header == 'true' ]]; then
-      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"${tmp_dir}/${report}.tmp";
+      echo "<tr><th align='center'>${line//,/</th><th>}</th></tr>" >>"${tmp_dir}/${report}";
       header='false';
     else
-      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"${tmp_dir}/${report}.tmp";
+      echo "<tr><td align='center'>${line//,/</td><td>}</td></tr>" >>"${tmp_dir}/${report}";
     fi
   done
-  echo '</table>'                                                  >>"${tmp_dir}/${report}.tmp"
+  echo '</table>'                                                  >>"${tmp_dir}/${report}"
 
-  cat "${tmp_dir}/${report}.tmp" && rm "${tmp_dir}/${report}.tmp"
+  cat "${tmp_dir}/${report}"
+}
+
+_report(){
+  local report="$1"
+  local user="$2"
+  local distro_list="$3"
+
+  local sql="$(cat "${resources_dir}/${report}.sql" | sed "s/:user/${user}/")"
+
+  #psql "$db_uri" --html -c "$sql"               >"${tmp_dir}/${report}.html" # html   # not needed?
+  psql "$db_uri" -AF',' --pset footer -c "$sql" >"${tmp_dir}/${report}.csv"  # csv
+
+  "$email_cmd" \
+    --distro-list "$distro_list" \
+    --subject     "Iris report for $report for $(date +%F)" \
+    --body        "Iris report for $(date +%F): " \
+    --attachment "${tmp_dir}/${report}.csv" \
+    --html
+}
+
+_report_athena(){
+  local report="$1"
+  local user="$2"
+  local distro_list="$3"
+
+  local sql="$(cat "${resources_dir}/athena/${report}.sql" | \
+    sed "s/:user/${user}/")"
+
+  #query "$sql"           >"${tmp_dir}/${report}.csv"  # csv
+  #csv_to_html "$report" >"${tmp_dir}/${report}.html" # html  # not needed?
+
+  "$email_cmd" \
+    --distro-list "$distro_list" \
+    --subject     "Iris report for $report for $(date +%F)" \
+    --body        "Iris report for $(date +%F): " \
+    --attachment "${tmp_dir}/${report}.csv" \
+    --html
 }
