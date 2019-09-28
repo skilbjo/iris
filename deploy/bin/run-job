@@ -28,8 +28,11 @@ prereqs(){
 if [[ $(uname) == 'FreeBSD' ]]; then git pull -f; update_crond; fi
 
 case "$_job" in
-  daily )  cmd="${src_dir}/run-it daily" ;;
-  weekly ) cmd="${src_dir}/run-it weekly" ;;
+  daily )  cmd="${src_dir}/daily/run-it  --task daily" ;;
+  weekly ) cmd="${src_dir}/weekly/run-it --task weekly" ;;
+
+  daily-testing )  cmd="${src_dir}/daily/run-it  --testing" ;;
+  weekly-testing ) cmd="${src_dir}/weekly/run-it --testing" ;;
   * ) echo 'No args provided' && exit 1 ;;
 esac
 

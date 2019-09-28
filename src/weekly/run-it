@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+set -eou pipefail
+
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+src_dir="${dir}/.."
+source "${src_dir}/util"
+util_setup "$dir"
+
+task=''
+set +u; db="$db_uri"; set -u
+
+usage(){ echo "Usage: iris-weekly: ${0} [--task <morning|night|all...>]" 1>&2; exit 1; }
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -t|--task)  task="$2"; shift ;;
+    --testing)  task='testing' ;;
+  esac
+  shift
+done
+if [[ -z $task ]]; then usage; fi
+
+weekly(){
+  if [[ -n $db ]]; then
+    _report_athena portfolio        'skilbjo' "$email"
+  else
+    _report        asset_type       'skilbjo' "$email"
+    _report        location         'skilbjo' "$email"
+    _report        capitalization   'skilbjo' "$email"
+    _report        investment_style 'skilbjo' "$email"
+  fi;
+}
+
+testing(){
+  if [[ ! -z $db ]]; then
+    _report        portfolio 'skilbjo' "$email"
+  else
+    _report_athena portfolio 'skilbjo' "$email"
+  fi
+}
+
+case "$task" in
+  weekly )  weekly ;;
+  testing ) testing ;;
+  * ) echo 'in src/weekly/run-it, no args provided' && exit 1 ;;
+esac
