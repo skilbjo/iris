@@ -11,6 +11,9 @@ update_crond(){
   case "$(uname)" in
     ('FreeBSD') sed -i '' '2c\'$'\nSHELL="/usr/local/bin/bash"\n' "${dir}/deploy/tasks/crontab"
                 sed -i '' '3c\'$'\ncmd="deploy/bin/run-job"\n'    "${dir}/deploy/tasks/crontab" ;;
+
+    ('Linux')   sed -i '2c SHELL=/usr/bin/bash'         "${dir}/deploy/tasks/crontab"
+                sed -i '3c cmd="deploy/bin/run-docker"' "${dir}/deploy/tasks/crontab" ;;
   esac
   sudo bash -c "cat ${dir}/deploy/tasks/crontab >/etc/cron.d/${app}"
 }
