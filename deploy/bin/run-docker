@@ -33,8 +33,8 @@ update_crond(){
     circleci) echo '' ;;
     *)
         case "$(uname)" in
-          ('Linux') sed -i '1i SHELL=/usr/bin/bash'         "${dir}/deploy/tasks/crontab"
-                    sed -i '1i cmd="deploy/bin/run-docker"' "${dir}/deploy/tasks/crontab" ;;
+          ('Linux') sed -i '1 SHELL=/usr/bin/bash'         "${dir}/deploy/tasks/crontab"
+                    sed -i '2 cmd="deploy/bin/run-docker"' "${dir}/deploy/tasks/crontab" ;;
         esac
         sudo cp "${dir}/deploy/tasks/crontab" "/etc/cron.d/${app}" ;;
   esac

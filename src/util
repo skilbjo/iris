@@ -47,9 +47,13 @@ util_setup(){
     export local_db='postgres://postgres@localhost/postgres'
     export email_cmd="${src_dir}/email"
   elif [[ $(whoami) == 'skilbjo' ]]; then
-    source "/Users/skilbjo/dev/engineering/src/athena.user"
-    export local_db="$(echo "$docker_psql_uri")" || export local_db='postgres://postgres@localhost/postgres'
-    export email_cmd="/Users/skilbjo/dev/data-engineering/src/email"
+    case "$(uname)" in
+      Darwin  ) local prefix='/Users'
+                export local_db="$(echo "$docker_psql_uri")" || export local_db='postgres://postgres@localhost/postgres' ;;
+      FreeBSD ) local prefix='/home' ;;
+    esac
+    source "${prefix}/skilbjo/dev/engineering/src/athena.user"
+    export email_cmd="${prefix}/skilbjo/dev/engineering/src/email"
   else
     >&2 echo "user is: $(whoami), add to setup fn"
   fi
