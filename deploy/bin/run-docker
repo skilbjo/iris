@@ -49,7 +49,7 @@ get_current_artifacts && \
 docker run --rm \
   --name="$(echo $app $@ | tr ' ' '_')" \
   -e db_uri="$(echo "${db_uri:-}")" \
-  -e _email="$(echo $email)" \
+  -e email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
   -e michie="$(echo "${michie:-}")" \
   -e aws_access_key_id="$(echo "${aws_access_key_id:-$robot_aws_access_key_id}")" \

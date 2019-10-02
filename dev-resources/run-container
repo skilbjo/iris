@@ -16,7 +16,7 @@ run_container(){
     -e db_uri="$(echo $db_uri)" \
     -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
     -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
-    -e _email="$(echo $email)" \
+    -e email="$(echo $email)" \
     -e email_pw="$(echo $email_pw)" \
     -e michie="$(echo $michie)" \
     -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
@@ -30,7 +30,7 @@ run_minicon(){
     --name="$(echo $app)" \
     -e aws_access_key_id="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
     -e aws_secret_access_key="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
-    -e _email="$(echo $email)" \
+    -e email="$(echo $email)" \
     -e email_pw="$(echo $email_pw)" \
     -e healthchecks_io_iris="$(echo $healthchecks_io_iris)" \
     "quay.io/skilbjo/iris:${tag}" bash
@@ -52,7 +52,7 @@ run_minidock(){
 
   /tmp/udocker run --nosysdirs \
     -v /dev -v /proc -v /etc/hosts \
-    --env="_email=${email}" \
+    --env="email=${email}" \
     --env="email_pw=${email_pw}" \
     --env="aws_access_key_id=${aws_access_key_id}" \
     --env="aws_secret_access_key=${aws_secret_access_key}" \
