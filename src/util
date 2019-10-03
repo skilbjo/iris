@@ -45,7 +45,7 @@ util_setup(){
     source "${src_dir}/athena"
     add_aws_vars
     export local_db='postgres://postgres@localhost/postgres'
-    export email="${_email:-$email}"         # needed, for some reason udocker can't use the "email" in the --env="email" call
+    set +u; echo "in lambda, in iris/util, email var is $email , _email var is $_email"; set -u
     export email_cmd="${src_dir}/email"
   elif [[ $(whoami) == 'skilbjo' ]]; then
     case "$(uname)" in
