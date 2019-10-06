@@ -36,13 +36,17 @@ with now_ts as (
     1,2,3,4,5,6,7,8
 ), max_known_date as (
   select
-    max(cast(date as date)) max_known_date
+    max(date) max_known_date
   from (
-    select date, dataset, count(*)
-    from datalake.equities
+    select
+      date,
+      dataset,
+      count(*)
+    from
+      datalake.equities
     where
-      date >= cast((select beginning_of_year from beginning_of_year ) as date)
-      and date <> cast((select now from now) as date)
+      date >= (select beginning_of_year from beginning_of_year )
+      and date <> (select now from now)
       and ticker in ( select distinct ticker from portfolio )
     group by
       1,2
@@ -50,14 +54,16 @@ with now_ts as (
    ) src
 ), fx as (
   select
-    currency, cast(rate as decimal(24,14)) rate
+    currency,
+    rate
   from
     datalake.currency
   where
     currency = 'GBP'
-    and ( date = cast((select today from date ) as date)
-    or    date = cast((select yesterday from date ) as date ))
-  order by date desc
+    and ( date = (select today from date )
+    or    date = (select yesterday from date ) )
+  order by
+    date desc
   limit 1
 ), fx_backup as (
   select
@@ -66,20 +72,21 @@ with now_ts as (
   select
     coalesce(fx.currency,fx_backup.currency) currency,
     coalesce(fx.rate    ,fx_backup.rate)     rate
-  from fx
+  from
+    fx
     right join fx_backup on fx.currency = fx_backup.currency
 ), equities as (
   select
     ticker,
-    cast(date as date)                     as date,
-    avg(case when ticker = 'LON:FCH' then try_cast(close as decimal(10,2)) * (select rate from fx_with_backup where currency = 'GBP') / 100 else try_cast(close as decimal(10,2)) end) as close
+    date,
+    avg(case when ticker = 'LON:FCH' then close * (select rate from fx_with_backup where currency = 'GBP') / 100 else close end) as close
   from
     datalake.equities equities
   where
-    date    = cast((select today from date) as date)
-    or date = cast((select yesterday from date) as date)
-    or date = cast((select max_known_date from max_known_date) as date)
-    or date = cast((select beginning_of_year from beginning_of_year) as date)
+    date    = (select today from date)
+    or date = (select yesterday from date)
+    or date = (select max_known_date from max_known_date)
+    or date = (select beginning_of_year from beginning_of_year)
   group by
     1,2
 ), today as (
@@ -173,7 +180,8 @@ with now_ts as (
     today
     full outer join yesterday on today.ticker = yesterday.ticker
     full outer join ytd on yesterday.ticker = ytd.ticker
-  order by today.market_value desc
+  order by
+    today.market_value desc
 ), detail_with_backup as (
   select
     coalesce(detail.asset_type,       backup.asset_type) asset_type,
@@ -242,7 +250,8 @@ with now_ts as (
   where ticker <> ''
   group by
     1--,2
-  order by market_value desc
+  order by
+    market_value desc
 ), _union as (
   select * from benchmark
   union all
