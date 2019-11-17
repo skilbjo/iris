@@ -30,8 +30,9 @@ get_current_artifacts(){
 
 update_crond(){
   case "$(whoami)" in
-    circleci) echo '' ;;
-    *)
+    circleci ) echo '' ;;
+    runner )   echo '' ;;
+    * )
         case "$(uname)" in
           ('Linux') sed -i '2 SHELL=/usr/bin/bash'         "${dir}/deploy/tasks/crontab"
                     sed -i '3 cmd="deploy/bin/run-docker"' "${dir}/deploy/tasks/crontab" ;;
