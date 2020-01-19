@@ -32,9 +32,12 @@ weekly(){
 
 testing(){
   if [[ -z $db ]]; then
-    _report        portfolio 'skilbjo' "$email"
-  else
     _report_athena portfolio 'skilbjo' "$email"
+  else
+    _report        asset_type       'skilbjo' "$email"
+    _report        location         'skilbjo' "$email"
+    _report        capitalization   'skilbjo' "$email"
+    _report        investment_style 'skilbjo' "$email"
   fi
 }
 
