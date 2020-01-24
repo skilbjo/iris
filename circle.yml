@@ -1,17 +1,36 @@
-version: 2
-jobs:
-  build:
+version: 2.1
+
+executors:
+  machine:
     working_directory: ~/iris
+    environment:
+      - PATH: /usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/circleci/.local/bin:/root/.local/bin
     machine: true
+
+commands:
+  shellcheck:
     steps:
-      - checkout
+      - run: wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-v0.6.0.linux.x86_64.tar.xz" | tar -xJv; cp shellcheck-v0.6.0/shellcheck /usr/bin
+      - run: find deploy/ src/ dev-resources/ -type f | grep -vE '(\.(py|pyc|sql|ya?ml|md|csv|json|jsonl|jpg|txt)$|Dockerfile|.DS_Store)' | xargs shellcheck --shell bash --severity error
+  install_minicon:
+    steps:
       - run: wget --directory-prefix=/home/circleci https://github.com/grycap/minicon/releases/download/1.2-2/minicon_1.2-2.deb
       - run: sudo apt update; sudo apt install -qq jq; sudo dpkg -i /home/circleci/minicon_1.2-2.deb
+  start_docker:
+    steps:
       - run: docker info >/dev/null 2>&1 || service docker start
+
+jobs:
+  test-and-publish:
+    executor: machine
+    steps:
+      - checkout
+      - shellcheck
+      - install_minicon
+      - start_docker
       - run: deploy/bin/publish-image
 
 workflows:
-  version: 2
-  build:
+  commit:
     jobs:
-      - build
+      - test-and-publish
