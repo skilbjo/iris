@@ -49,7 +49,7 @@ get_current_artifacts && \
 # circleci runtime: -e AWS_ACCESS_KEY_ID="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_access_key_id | awk '{print $3}')" \
 
 docker run --rm \
-  --name="$(echo $app $@ | tr ' ' '_')" \
+  --name="$(echo $app "$@" | tr ' ' '_')" \
   -e db_uri="$(echo "${db_uri:-}")" \
   -e email="$(echo $email)" \
   -e email_pw="$(echo $email_pw)" \
@@ -62,4 +62,4 @@ docker run --rm \
   -e AWS_SECRET_ACCESS_KEY="$(cat ~/.aws/credentials | grep -A 2 skilbjo-robot | grep aws_secret_access_key | awk '{print $3}')" \
   -e AWS_REGION='us-east-1' \
   "$img" \
-  "$job_cmd" $@
+  "$job_cmd" "$@"
