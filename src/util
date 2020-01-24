@@ -100,17 +100,33 @@ _report_athena(){
   local report="$1"
   local user="$2"
   local distro_list="$3"
+  set +u; local _date="$4"; if [[ -z $_date ]]; then _date="$(date +%F)"; fi; set -u
+  local subject="Iris report for $report for $_date"
+  local body="Iris report for ${_date}:"
 
   local sql="$(cat "${resources_dir}/athena/${report}.sql" | \
-    sed "s/:user/${user}/")"
+    sed "s/:user/${user}/" | \
+    sed "s/:date/${_date}/")"
 
   query "$sql"           >"${tmp_dir}/${report}.csv"  # csv
   #csv_to_html "$report" >"${tmp_dir}/${report}.html" # html  # not needed?
 
   "$email_cmd" \
     --distro-list "$distro_list" \
-    --subject     "Iris report for $report for $(date +%F)" \
-    --body        "Iris report for $(date +%F): " \
+    --subject     "$subject" \
+    --body        "$body" \
     --attachment "${tmp_dir}/${report}.csv" \
     --html
+}
+
+get_yesterday(){
+  local _date="$(date +%F)"
+
+  if [[ $(whoami) == 'root' ]] || [[ $(whoami) == 'sbx_'* ]]; then
+    _date="$(date -d "$_date - 1 day" +%F)"
+  else
+    _date="$(gdate -d "$_date - 1 day" +%F)"
+  fi
+
+  echo "$_date"
 }

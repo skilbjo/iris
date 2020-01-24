@@ -21,7 +21,7 @@ if [[ -z $task ]]; then usage; fi
 
 daily(){
   if [[ -z $db ]]; then
-    _report_athena portfolio 'skilbjo' "$email"
+    _report_athena portfolio 'skilbjo' "$email" "$(get_yesterday)"
   else
     _report        portfolio 'skilbjo' "$email"
     _report        portfolio 'michie'  "$michie"
@@ -30,7 +30,7 @@ daily(){
 
 testing(){
   if [[ -z $db ]]; then
-    _report_athena portfolio 'skilbjo' "$email"
+    _report_athena portfolio 'skilbjo' "$email" "$(get_yesterday)"
   else
     _report        portfolio 'skilbjo' "$email"
   fi

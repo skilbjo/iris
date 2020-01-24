@@ -1,21 +1,21 @@
 with now_ts as (
   select current_timestamp at time zone 'America/Los_Angeles' as now_ts
 ), now as (
-  select cast((select now_ts from now_ts) as date) as now
+  select cast((select now_ts from now_ts) as date) as now, date(':date') as hardcoded
 ), _user as (
   select ':user' as _user
 ), datasource as (
   select 'ALPHA-VANTAGE' as datasource
 ), date as (
   select
-    (select now from now) today,
-    case day_of_week((select now_ts from now_ts)) % 7
-      when 1 then (select now from now) - interval '3' day
-      when 0 then (select now from now) - interval '2' day
-      else        (select now from now) - interval '1' day
+    (select hardcoded from now) today,
+    case day_of_week((select hardcoded from now)) % 7
+      when 1 then (select hardcoded from now) - interval '3' day
+      when 0 then (select hardcoded from now) - interval '2' day
+      else        (select hardcoded from now) - interval '1' day
     end as yesterday
 ), beginning_of_year as (
-  select date_trunc('year', ( select now from now)) + interval '1' day beginning_of_year
+  select date_trunc('year', ( select hardcoded from now)) + interval '1' day beginning_of_year
 ), portfolio as (
   select
     markets.asset_type,
@@ -46,7 +46,7 @@ with now_ts as (
       datalake.equities
     where
       date >= (select beginning_of_year from beginning_of_year )
-      and date <> (select now from now)
+      and date <> (select today from date )
       and ticker in ( select distinct ticker from portfolio )
     group by
       1,2
