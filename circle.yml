@@ -10,7 +10,7 @@ executors:
 commands:
   shellcheck:
     steps:
-      - run: wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-v0.6.0.linux.x86_64.tar.xz" | tar -xJv; cp shellcheck-v0.6.0/shellcheck /usr/bin
+      - run: wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-v0.6.0.linux.x86_64.tar.xz" | tar -xJv; sudo cp shellcheck-v0.6.0/shellcheck /usr/bin
       - run: find deploy/ src/ dev-resources/ -type f | grep -vE '(\.(py|pyc|sql|ya?ml|md|csv|json|jsonl|jpg|txt)$|Dockerfile|.DS_Store)' | xargs shellcheck --shell bash --severity error
   install_minicon:
     steps:
