@@ -1,8 +1,12 @@
 version: 2.1
 
+references:
+  project: &project   iris
+  dir:     &dir     ~/iris
+
 executors:
   machine:
-    working_directory: ~/iris
+    working_directory: *dir
     environment:
       - PATH: /usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/circleci/.local/bin:/root/.local/bin
     machine: true
