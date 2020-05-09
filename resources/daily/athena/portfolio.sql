@@ -60,8 +60,8 @@ with now_ts as (
     datalake.currency
   where
     currency = 'GBP'
-    and ( date = (select today from date )
-    or    date = (select yesterday from date ) )
+    and ( date = ( select today from date )
+    or    date = ( select yesterday from date ) )
   order by
     date desc
   limit 1
@@ -83,10 +83,10 @@ with now_ts as (
   from
     datalake.equities equities
   where
-    date    = (select today from date)
-    or date = (select yesterday from date)
-    or date = (select max_known_date from max_known_date)
-    or date = (select beginning_of_year from beginning_of_year)
+    date    = ( select today from date )
+    or date = ( select yesterday from date )
+    or date = ( select max_known_date from max_known_date )
+    or date = ( select beginning_of_year from beginning_of_year )
   group by
     1,2
 ), today as (

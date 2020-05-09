@@ -39,8 +39,12 @@ with now_ts as (
   select
     max(cast(date as date)) max_known_date
   from (
-    select date, dataset, count(*)
-    from dw.equities_fact
+    select
+      date,
+      dataset,
+      count(*)
+    from
+      dw.equities_fact
     where
       ticker in ( select distinct ticker from dw.portfolio_dim where dataset = ( select datasource from datasource ) )
       and date <> ( select now from now )
@@ -57,7 +61,8 @@ with now_ts as (
     currency = 'GBP'
     and ( date = ( select today from date )
     or    date = ( select yesterday from date ) )
-  order by date desc
+  order by
+    date desc
   limit 1
 ), fx_backup as (
   select
@@ -65,8 +70,9 @@ with now_ts as (
 ), fx_with_backup as (
   select
     coalesce(fx.currency,fx_backup.currency) currency,
-    coalesce(fx.rate    ,fx_backup.rate) rate
-  from fx
+    coalesce(fx.rate    ,fx_backup.rate)     rate
+  from
+    fx
     right join fx_backup on fx.currency = fx_backup.currency
 ), equities as (
   select
