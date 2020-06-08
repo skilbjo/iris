@@ -54,7 +54,8 @@ with now_ts as (
    ) src
 ), fx as (
   select
-    currency, rate
+    currency,
+    rate
   from
     dw.currency_fact
   where
@@ -86,7 +87,6 @@ with now_ts as (
     or date = ( select yesterday from date )
     or date = ( select max_known_date from max_known_date )
     or date = ( select beginning_of_year from beginning_of_year )
-    or date is null
   group by
     1,2
 ), today as (
@@ -180,7 +180,8 @@ with now_ts as (
     today
     full outer join yesterday on today.ticker = yesterday.ticker
     full outer join ytd on yesterday.ticker = ytd.ticker
-  order by today.market_value desc
+  order by
+    today.market_value desc
 ), detail_with_backup as (
   select
     coalesce(detail.asset_type,       backup.asset_type) asset_type,

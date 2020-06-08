@@ -121,9 +121,9 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) yesterday
   from
     equities
-    right join portfolio on portfolio.ticker = equities.ticker
+    right join portfolio on equities.ticker = portfolio.ticker
   where
-    date in ( select yesterday from date ) or date is null
+    date in ( select yesterday from date )
   group by
     1,2,3,4,5,6
 ), ytd as (
@@ -137,7 +137,7 @@ with now_ts as (
     sum((quantity * coalesce(close,cost_per_share))) market_value
   from
     equities
-    right join portfolio on portfolio.ticker = equities.ticker
+    right join portfolio on equities.ticker = portfolio.ticker
   where
     date = ( select beginning_of_year from beginning_of_year )
   group by
@@ -155,7 +155,7 @@ with now_ts as (
     sum(((quantity * coalesce(close,cost_per_share)) - (quantity * cost_per_share))) gain_loss
   from
     equities
-    right join portfolio on portfolio.ticker = equities.ticker
+    right join portfolio on equities.ticker = portfolio.ticker
   where
     date in ( select max_known_date from max_known_date )
     or (case when equities.ticker in ('VMMXX')
