@@ -18,4 +18,4 @@
 15 21 * * 1-5 skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd" daily >/dev/null 2>&1
 
 ### - weekly --------------------------------------
-15 21 * * 5   skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd" weekly >/dev/null 2>&1
+16 21 * * 5   skilbjo . /home/skilbjo/.profilelocal; cd "$app_dir" ; "$cmd" weekly >/dev/null 2>&1
