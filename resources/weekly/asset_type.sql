@@ -1,5 +1,5 @@
 with now_ts as (
-  select current_timestamp at time zone 'America/Los_Angeles' as now_ts -- for a specifc date: select cast('2018-03-13' as timestamp) as now_ts
+  select current_timestamp /*at time zone 'America/Los_Angeles'*/ as now_ts -- for a specifc date: select cast('2018-03-13' as timestamp) as now_ts
 ), now as (
   select cast((select now_ts from now_ts) as date) as now
 ), _user as (
