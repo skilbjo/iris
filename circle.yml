@@ -14,7 +14,7 @@ executors:
 commands:
   shellcheck:
     steps:
-      - run: wget -qO- "https://storage.googleapis.com/shellcheck/shellcheck-v0.6.0.linux.x86_64.tar.xz" | tar -xJv; sudo cp shellcheck-v0.6.0/shellcheck /usr/bin
+      - run: wget -qO- "https://github.com/koalaman/shellcheck/releases/download/v0.6.0/shellcheck-v0.6.0.linux.x86_64.tar.xz" | tar -xJv; sudo cp shellcheck-v0.6.0/shellcheck /usr/bin
       - run: find dev-resources/ -type f -maxdepth 1 | grep -vE '(\.(py|pyc|sql|ya?ml|md|csv|json|jsonl|jpg|txt|R)$|Dockerfile|.DS_Store)' | xargs shellcheck --shell bash --severity error
       - run: find deploy/ src/ -type f | grep -vE '(\.(py|pyc|sql|ya?ml|md|csv|json|jsonl|jpg|txt)$|Dockerfile|.DS_Store)' | xargs shellcheck --shell bash --severity error
   install_minicon:
