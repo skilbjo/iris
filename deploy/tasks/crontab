@@ -2,7 +2,7 @@
   SHELL=""
   cmd=""
   PATH=:/bin:/usr/bin:/usr/local/bin:/usr/sbin:/usr/local/sbin
-  MAILTO=john.skilbeck@gmail.com
+  MAILTO=skilbjo@gmail.com
   app_dir="/home/skilbjo/dev/iris"
 
 ## -- jobs ----------------------------------------
